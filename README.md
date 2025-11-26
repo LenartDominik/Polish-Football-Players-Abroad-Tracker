@@ -1,4 +1,4 @@
-# 🇵🇱 Polish Players Tracker
+# 🇵🇱 Polish Football Data Hub International
 
 **Wersja:** v0.7.3 | **Status:** ✅ Production Ready | **Ostatnia aktualizacja:** 25.11.2025
 
