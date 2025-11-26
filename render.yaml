@@ -5,6 +5,7 @@ services:
     env: python
     region: frankfurt  # Najbliższy region dla Polski
     plan: free
+    rootDirectory: polish-players-tracker
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
@@ -32,6 +33,6 @@ services:
         sync: false
     healthCheckPath: /health
     
-  # SQLite database (jako persistent disk)
-  # Render Free nie obsługuje PostgreSQL, więc używamy SQLite z persistent disk
+    # Database: Supabase PostgreSQL (cloud)
+  # Dodaj DATABASE_URL w Render Dashboard → Environment Variables
 databases: []
