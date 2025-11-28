@@ -61,7 +61,7 @@ All player statistics in this application are sourced from **[FBref.com](https:/
 - **Rate limiting**: 12s między requestami (bezpieczne dla ToS)
 - **Rozbicie na rozgrywki**: Liga, Puchary Europejskie (LM/LE/LK), Reprezentacja (ROK KALENDARZOWY!), Puchary krajowe
 - **Match logs**: Szczegółowe statystyki meczowe dla każdego zawodnika
-- **Tracking 100+ polskich piłkarzy** z europejskich lig
+- **Tracking 90+ polskich piłkarzy** z europejskich lig
 
 ### 📊 Backend API (FastAPI)
 - **RESTful API** z automatyczną dokumentacją Swagger/ReDoc
@@ -663,7 +663,7 @@ python -c "from app.backend.main import send_sync_notification_email; send_sync_
 
 ## 📊 Statystyki projektu
 
-- **100+** polskich piłkarzy śledzonych
+- **90+** polskich piłkarzy śledzonych
 - **20+** europejskich lig
 - **4 typy rozgrywek**: Liga, Puchary Europejskie, Reprezentacja, Puchary krajowe
 - **30+** statystyk per gracz (gracze) + **15+** statystyk (bramkarze)

@@ -5,8 +5,9 @@ Usage:
 """
 import streamlit as st
 import pandas as pd
-import sqlite3
+# # import sqlite3  # REMOVED - using API now  # REMOVED - using API now
 from pathlib import Path
+from api_client import get_api_client
 
 # Helper function to calculate per 90 metrics
 def calculate_per_90(value, minutes):
@@ -26,7 +27,11 @@ def calculate_xgi(xg, xa):
 def get_national_team_stats_by_year(player_id, year, matches_df):
     """Get national team statistics for a specific calendar year from player_matches table"""
     if matches_df.empty:
-        return None
+        return pd.DataFrame()
+    
+    required_columns = ['player_id', 'match_date', 'competition', 'minutes_played', 'goals', 'assists', 'xg','xa']                                                                                                               
+    if not all(col in matches_df.columns for col in required_columns):                                              
+        return pd.DataFrame()
     
     # Filter for national team matches (WCQ, Friendlies, Nations League, Euro, World Cup)
     national_competitions = ['WCQ', 'Friendlies (M)', 'UEFA Nations League', 'UEFA Euro', 'World Cup', 
@@ -65,6 +70,10 @@ def get_national_team_stats_by_year(player_id, year, matches_df):
 def get_national_team_history_by_calendar_year(player_id, matches_df):
     """Get national team statistics grouped by calendar year from player_matches table"""
     if matches_df.empty:
+        return pd.DataFrame()
+    
+    required_columns = ['player_id', 'match_date', 'competition', 'minutes_played', 'goals', 'assists', 'xg', 'xa']     
+    if not all(col in matches_df.columns for col in required_columns):
         return pd.DataFrame()
     
     # Filter for national team matches
@@ -132,120 +141,33 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-# Database path
-DB_PATH = Path(__file__).parent.parent.parent / "players.db"
-# @st.cache_data(ttl=60) 
+# Initialize API client
+@st.cache_data(ttl=60, show_spinner=False)
 def load_data():
-    """Load players data from SQLite database."""
-    if not DB_PATH.exists():
-        return (
-            pd.DataFrame(),
-            pd.DataFrame(),
-            pd.DataFrame(),
-            pd.DataFrame(),
-            pd.DataFrame()
-        )
+    """Load players data from API."""
     try:
-        conn = sqlite3.connect(str(DB_PATH))
+        api_client = get_api_client()
+        
         # Pobierz dane graczy
-        players_query = """
-            SELECT 
-                id,
-                name,
-                team,
-                league,
-                nationality,
-                position,
-                last_updated
-            FROM players
-            ORDER BY name
-        """
-        players_df = pd.read_sql_query(players_query, conn)
-        # Pobierz statystyki sezonowe - WSZYSTKIE POLA Z FBREF
-        stats_query = """
-            SELECT 
-                player_id,
-                season,
-                matches,
-                goals,
-                assists,
-                yellow_cards,
-                red_cards,
-                minutes_played,
-                team,
-                league,
-                xG,
-                xA,
-                progressive_passes,
-                progressive_carries,
-                starts,
-                shots_total,
-                shots_on_target,
-                shots_on_target_pct,
-                penalty_kicks_made,
-                penalty_kicks_attempted,
-                passes_completed,
-                passes_attempted,
-                pass_completion_pct,
-                key_passes,
-                passes_into_penalty_area,
-                shot_creating_actions,
-                goal_creating_actions,
-                tackles,
-                tackles_won,
-                interceptions,
-                blocks,
-                clearances,
-                touches,
-                dribbles_completed,
-                dribbles_attempted,
-                carries,
-                progressive_carrying_distance,
-                fouls_committed,
-                fouls_drawn,
-                offsides,
-                aerials_won,
-                aerials_lost,
-                ball_recoveries
-            FROM player_season_stats
-            ORDER BY player_id, season DESC
-        """
-        stats_df = pd.read_sql_query(stats_query, conn)
-        # Pobierz competition_stats
-        comp_stats_query = """
-            SELECT * FROM competition_stats ORDER BY player_id, season DESC, competition_type
-        """
-        comp_stats_df = pd.read_sql_query(comp_stats_query, conn)
+        players_df = api_client.get_all_players()
+        
+        # Pobierz statystyki competition_stats
+        comp_stats_df = api_client.get_all_competition_stats()
+        
         # Pobierz goalkeeper_stats
-        gk_stats_query = """
-            SELECT * FROM goalkeeper_stats ORDER BY player_id, season DESC, competition_type
-        """
-        gk_stats_df = pd.read_sql_query(gk_stats_query, conn)
-        # Mecze graczy
-        matches_query = """
-            SELECT 
-                player_id,
-                match_date,
-                competition,
-                round,
-                venue,
-                opponent,
-                result,
-                minutes_played,
-                goals,
-                assists,
-                shots,
-                shots_on_target,
-                xg,
-                xa
-            FROM player_matches
-            ORDER BY player_id, match_date DESC
-        """
-        matches_df = pd.read_sql_query(matches_query, conn)
-        conn.close()
+        gk_stats_df = api_client.get_all_goalkeeper_stats()
+        
+        # Pobierz mecze graczy
+        matches_df = api_client.get_all_matches()
+        
+        # Note: player_season_stats table is deprecated, using competition_stats instead
+        stats_df = pd.DataFrame()  # Empty for backward compatibility
+        
         return players_df, stats_df, comp_stats_df, gk_stats_df, matches_df
     except Exception as e:
-        st.error(f"Error loading data: {e}")
+        st.error(f"Error loading data from API: {e}")
+        import traceback
+        st.error(traceback.format_exc())
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
 # Sidebar - Search
 st.sidebar.header("🔎 Player Search")
@@ -298,10 +220,10 @@ if not search_name and selected_team == 'All':
 if not filtered_df.empty:
     for idx, row in filtered_df.iterrows():
         # Przywróć pobieranie competition_stats i goalkeeper_stats dla każdej karty zawodnika
-        comp_stats = comp_stats_df[comp_stats_df['player_id'] == row['id']].sort_values(['season', 'competition_type'], ascending=False)
-        gk_stats = gk_stats_df[gk_stats_df['player_id'] == row['id']].sort_values(['season', 'competition_type'], ascending=False)
+        comp_stats = comp_stats_df[comp_stats_df['player_id'] == row['id']].sort_values(['season', 'competition_type'], ascending=False) if not comp_stats_df.empty and 'player_id' in comp_stats_df.columns else pd.DataFrame()
+        gk_stats = gk_stats_df[gk_stats_df['player_id'] == row['id']].sort_values(['season', 'competition_type'], ascending=False) if not gk_stats_df.empty and 'player_id' in gk_stats_df.columns else pd.DataFrame()
         # Przywróć pobieranie player_stats, bo jest używane w innych sekcjach
-        player_stats = stats_df[stats_df['player_id'] == row['id']].sort_values('season', ascending=False)
+        player_stats = stats_df[stats_df['player_id'] == row['id']].sort_values('season', ascending=False) if not stats_df.empty and 'player_id' in stats_df.columns else pd.DataFrame()
         # ...nowa sekcja 5 kolumn i advanced stats (tylko raz, nie powtarzaj)
         # Tytuł karty
         current_season = ['2025-2026', '2025/2026', 2025]
@@ -1239,12 +1161,22 @@ if not filtered_df.empty:
                 season_display.columns = ['Season', 'Team', 'Matches', 'Goals', 'Assists', 'Yellow', 'Red', 'Minutes']
                 st.dataframe(season_display, use_container_width=True, hide_index=True)
             # ===== NOWA SEKCJA: MECZE GRACZA ===== 
-            player_matches = matches_df[matches_df['player_id'] == row['id']]
+            # ===== NOWA SEKCJA: MECZE GRACZA ===== 
+            player_matches = matches_df[matches_df['player_id'] == row['id']] if not matches_df.empty and 'player_id' in matches_df.columns else pd.DataFrame()
+            
             if not player_matches.empty and len(player_matches) > 0:
                 st.write("---")
                 st.subheader("🏟️ Recent Matches (Season 2025/26)")
+                
+                # POPRAWKA: konwersja daty i sort malejąco po dacie
+                pm = player_matches.copy()
+                if pm['match_date'].dtype != 'datetime64[ns]':
+                    pm['match_date'] = pd.to_datetime(pm['match_date'], errors='coerce')
+                pm = pm.dropna(subset=['match_date'])
+                pm = pm.sort_values('match_date', ascending=False)
+                
                 # Pokaż ostatnie 10 meczów
-                recent_matches = player_matches.head(10)
+                recent_matches = pm.head(10)
                 for idx_match, match in recent_matches.iterrows():
                     # Ikona wyniku
                     result_str = match['result'] if pd.notna(match['result']) else ''
@@ -1336,4 +1268,6 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+
 

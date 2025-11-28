@@ -846,7 +846,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Polish Players Tracker - API",
     description="""
-    🇵🇱 **Polish Players Tracker API** - Real-time monitoring of 100+ Polish footballers playing abroad.
+    🇵🇱 **Polish Players Tracker API** - Real-time monitoring of 90+ Polish footballers playing abroad.
     
     ## 📊 Data Source & Attribution
     
@@ -952,7 +952,6 @@ def root():
     """
     return {
         "message": "🇵🇱 Welcome to Polish Players Tracker API",
-        "version": "0.7.3",
         "status": "operational",
         "data_source": {
             "name": "FBref.com",
@@ -965,7 +964,7 @@ def root():
             "🤖 Automated scheduler (stats 2x/week, matchlogs 1x/week)",
             "📧 Email notifications",
             "🕸️ Playwright web scraping",
-            "📊 100+ Polish players tracking",
+            "📊 90+ Polish players tracking",
             "🏆 Competition breakdown (League/Europe/National Team/Domestic Cups)",
             "🥅 Dedicated goalkeeper statistics",
             "📋 Detailed match logs tracking",

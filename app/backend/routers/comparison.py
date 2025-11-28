@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import create_engine
+﻿from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
 from typing import List, Optional
@@ -20,7 +20,7 @@ async def get_player_stats(player_id: int, season: Optional[str] = None):
     """
     db = SessionLocal()
     try:
-        query = """
+        query_str = """
         SELECT 
             p.name,
             p.position,
@@ -33,10 +33,8 @@ async def get_player_stats(player_id: int, season: Optional[str] = None):
             SUM(cs.yellow_cards) AS yellow_cards,
             SUM(cs.red_cards) AS red_cards,
             SUM(cs.minutes) AS minutes_played,
-            SUM(cs.xg) AS xG,
-            SUM(cs.xa) AS xA,
-            SUM(cs.shots) AS shots_total,
-            SUM(cs.shots_on_target) AS shots_on_target,
+            SUM(cs.xg) AS "xG",
+            SUM(cs.xa) AS "xA",
             SUM(cs.games_starts) AS games_starts
         FROM players p
         LEFT JOIN competition_stats cs ON p.id = cs.player_id
@@ -46,10 +44,10 @@ async def get_player_stats(player_id: int, season: Optional[str] = None):
         
         params = {"player_id": player_id}
         if season:
-            query += " AND cs.season = :season"
+            query_str += " AND cs.season = :season"
             params["season"] = season
             
-        result = pd.read_sql(query, db.bind, params=params)
+        result = pd.read_sql(text(query_str), db.bind, params=params)
         
         if result.empty:
             raise HTTPException(status_code=404, detail="Player not found")
@@ -85,7 +83,7 @@ async def compare_players(
         """
         
         positions_df = pd.read_sql(
-            position_query, 
+            text(position_query), 
             db.bind, 
             params={"player1_id": player1_id, "player2_id": player2_id}
         )
@@ -99,8 +97,9 @@ async def compare_players(
         player1_pos = positions_df[positions_df['id'] == player1_id]['position'].values[0]
         player2_pos = positions_df[positions_df['id'] == player2_id]['position'].values[0]
         
-        is_player1_gk = player1_pos == "Goalkeeper"
-        is_player2_gk = player2_pos == "Goalkeeper"
+        # Check if goalkeeper - handle both "GK" and "Goalkeeper"
+        is_player1_gk = player1_pos in ["Goalkeeper", "GK"] if player1_pos else False
+        is_player2_gk = player2_pos in ["Goalkeeper", "GK"] if player2_pos else False
         
         # Check if trying to compare goalkeeper with field player
         if is_player1_gk != is_player2_gk:
@@ -122,20 +121,19 @@ SELECT
     SUM(gs.games_starts) AS games_starts,
     SUM(gs.minutes) AS minutes_played,
     SUM(gs.goals_against) AS goals_against,
-    ROUND(AVG(gs.goals_against_per90), 2) AS goals_against_per90,
+    ROUND(CAST(AVG(gs.goals_against_per90) AS NUMERIC), 2) AS goals_against_per90,
     SUM(gs.shots_on_target_against) AS shots_on_target_against,
     SUM(gs.saves) AS saves,
-    ROUND(AVG(gs.save_percentage), 2) AS save_percentage,
+    ROUND(CAST(AVG(gs.save_percentage) AS NUMERIC), 2) AS save_percentage,
     SUM(gs.clean_sheets) AS clean_sheets,
-    ROUND(AVG(gs.clean_sheet_percentage), 2) AS clean_sheet_percentage,
+    ROUND(CAST(AVG(gs.clean_sheet_percentage) AS NUMERIC), 2) AS clean_sheet_percentage,
     SUM(gs.wins) AS wins,
     SUM(gs.draws) AS draws,
     SUM(gs.losses) AS losses,
     SUM(gs.penalties_attempted) AS penalties_attempted,
     SUM(gs.penalties_allowed) AS penalties_allowed,
     SUM(gs.penalties_saved) AS penalties_saved,
-    SUM(gs.penalties_missed) AS penalties_missed,
-    SUM(gs.post_shot_xg) AS post_shot_xg
+    SUM(gs.penalties_missed) AS penalties_missed
 FROM players p
 INNER JOIN goalkeeper_stats gs ON p.id = gs.player_id
 WHERE p.id IN (:player1_id, :player2_id)
@@ -143,6 +141,7 @@ WHERE p.id IN (:player1_id, :player2_id)
 """
         else:
             # For field players, use competition_stats table
+            # G+A/90 - ONLY with actual minutes (NO estimation)
             query = """
 SELECT 
     p.id,
@@ -156,11 +155,14 @@ SELECT
     SUM(cs.yellow_cards) AS yellow_cards,
     SUM(cs.red_cards) AS red_cards,
     SUM(cs.minutes) AS minutes_played,
-    SUM(cs.xg) AS xG,
-    SUM(cs.xa) AS xA,
-    SUM(cs.shots) AS shots_total,
-    SUM(cs.shots_on_target) AS shots_on_target,
-    SUM(cs.games_starts) AS games_starts
+    SUM(cs.xg) AS "xG",
+    SUM(cs.xa) AS "xA",
+    SUM(cs.games_starts) AS games_starts,
+    CASE 
+        WHEN SUM(cs.minutes) > 0 
+        THEN ROUND(CAST((SUM(cs.goals) + SUM(cs.assists)) * 90.0 / SUM(cs.minutes) AS NUMERIC), 2)
+        ELSE NULL
+    END AS "G+A_per_90"
 FROM players p
 INNER JOIN competition_stats cs ON p.id = cs.player_id
 WHERE p.id IN (:player1_id, :player2_id)
@@ -177,12 +179,12 @@ WHERE p.id IN (:player1_id, :player2_id)
             params["season"] = season
         else:
             # Use latest season (2025-2026 or 2025) - default for comparison, ONLY LEAGUE stats
-            query += " AND " + ("gs" if is_player1_gk else "cs") + ".season IN ('2025-2026', '2025/2026', '2025', 2025)"
+            query += " AND " + ("gs" if is_player1_gk else "cs") + ".season IN ('2025-2026', '2025/2026', '2025')"
 
         # Group by player info only (not season) to sum all LEAGUE games from that season
         query += " GROUP BY p.id, p.name, p.position, p.team, p.league"
 
-        df = pd.read_sql(query, db.bind, params=params)
+        df = pd.read_sql(text(query), db.bind, params=params)
 
         if df.empty or len(df) < 2:
             raise HTTPException(
@@ -220,8 +222,7 @@ async def get_available_stats(player_type: Optional[str] = Query(None, descripti
                 {"key": "clean_sheet_percentage", "label": "Clean Sheet %", "type": "percentage"},
                 {"key": "goals_against", "label": "Goals Against", "type": "count"},
                 {"key": "goals_against_per90", "label": "Goals Against per 90", "type": "decimal"},
-                {"key": "shots_on_target_against", "label": "Shots on Target Against", "type": "count"},
-                {"key": "post_shot_xg", "label": "Post-Shot xG", "type": "decimal"}
+                {"key": "shots_on_target_against", "label": "Shots on Target Against", "type": "count"}
             ],
             "penalties": [
                 {"key": "penalties_attempted", "label": "Penalties Attempted", "type": "count"},
@@ -246,10 +247,9 @@ async def get_available_stats(player_type: Optional[str] = Query(None, descripti
             "offensive": [
                 {"key": "goals", "label": "Goals", "type": "count"},
                 {"key": "assists", "label": "Assists", "type": "count"},
+                {"key": "G+A_per_90", "label": "G+A per 90", "type": "decimal"},
                 {"key": "xG", "label": "Expected Goals (xG)", "type": "decimal"},
-                {"key": "xA", "label": "Expected Assists (xA)", "type": "decimal"},
-                {"key": "shots_total", "label": "Total Shots", "type": "count"},
-                {"key": "shots_on_target", "label": "Shots on Target", "type": "count"}
+                {"key": "xA", "label": "Expected Assists (xA)", "type": "decimal"}
             ],
             "defensive": [
                 {"key": "yellow_cards", "label": "Yellow Cards", "type": "count"},
@@ -257,10 +257,6 @@ async def get_available_stats(player_type: Optional[str] = Query(None, descripti
             ],
             "general": [
                 {"key": "matches", "label": "Matches Played", "type": "count"},
-                {"key": "games_starts", "label": "Games Started", "type": "count"},
-                {"key": "minutes_played", "label": "Minutes Played", "type": "count"}
+                {"key": "games_starts", "label": "Games Started", "type": "count"}
             ]
         }
-
-
-

@@ -1,4 +1,4 @@
-import streamlit as st
+﻿import streamlit as st
 import requests
 import pandas as pd
 import plotly.graph_objects as go
@@ -52,11 +52,60 @@ def compare_players(player1_id: int, player2_id: int, season: str = None, stats:
         st.error(f"Error comparing players: {e}")
         return None
 
-# Create radar chart
+# Helper function to format values (show N/A for 0 or NULL when appropriate)
+def format_value(value, stat_name):
+    """
+    Format statistical values for display.
+    Shows 'N/A' for missing data (0 or None) in stats where 0 is not meaningful.
+    """
+    # Stats where 0 is a valid value
+    valid_zero_stats = ['goals', 'assists', 'yellow_cards', 'red_cards', 'losses', 
+                        'penalties_missed', 'penalties_allowed', 'goals_against', 
+                        'matches', 'games_starts']
+    
+    # Check if value is None or 0
+    if value is None or (isinstance(value, (int, float)) and value == 0):
+        # If stat can legitimately be 0, show it
+        if stat_name.lower() in valid_zero_stats:
+            return 0
+        # Otherwise show N/A
+        return 'N/A'
+    
+    # For valid non-zero values, return as is
+    return value
+
+# Format value for display in table
+def format_display_value(value):
+    """Format value for nice display in tables"""
+    if value == 'N/A':
+        return 'N/A'
+    if isinstance(value, float):
+        return f"{value:.2f}"
+    return str(value)
+
+# Create radar chart (skip N/A values)
 def create_radar_chart(player1_data: Dict, player2_data: Dict, selected_stats: List[str]):
-    categories = [s.replace("_", " ").title() for s in selected_stats]
-    values1 = [float(player1_data.get(s, 0) or 0) for s in selected_stats]
-    values2 = [float(player2_data.get(s, 0) or 0) for s in selected_stats]
+    # Filter out stats where both players have N/A
+    valid_stats = []
+    for stat in selected_stats:
+        val1 = format_value(player1_data.get(stat, 0), stat)
+        val2 = format_value(player2_data.get(stat, 0), stat)
+        if val1 != 'N/A' or val2 != 'N/A':
+            valid_stats.append(stat)
+    
+    if not valid_stats:
+        return None
+    
+    categories = [s.replace("_", " ").replace("G+A", "G+A").title() for s in valid_stats]
+    
+    # Convert N/A to 0 for chart purposes
+    values1 = []
+    values2 = []
+    for s in valid_stats:
+        v1 = format_value(player1_data.get(s, 0), s)
+        v2 = format_value(player2_data.get(s, 0), s)
+        values1.append(float(v1) if v1 != 'N/A' else 0)
+        values2.append(float(v2) if v2 != 'N/A' else 0)
 
     # Normalization to 0-100 for better comparison
     max_values = [max(v1,v2) if max(v1,v2) > 0 else 1 for v1,v2 in zip(values1, values2)]
@@ -88,11 +137,29 @@ def create_radar_chart(player1_data: Dict, player2_data: Dict, selected_stats: L
     )
     return fig
 
-# Create bar chart
+# Create bar chart (skip N/A values)
 def create_bar_chart(player1_data: Dict, player2_data: Dict, selected_stats: List[str]):
-    categories = [s.replace("_", " ").title() for s in selected_stats]
-    values1 = [float(player1_data.get(s, 0) or 0) for s in selected_stats]
-    values2 = [float(player2_data.get(s, 0) or 0) for s in selected_stats]
+    # Filter out stats where both players have N/A
+    valid_stats = []
+    for stat in selected_stats:
+        val1 = format_value(player1_data.get(stat, 0), stat)
+        val2 = format_value(player2_data.get(stat, 0), stat)
+        if val1 != 'N/A' or val2 != 'N/A':
+            valid_stats.append(stat)
+    
+    if not valid_stats:
+        return None
+    
+    categories = [s.replace("_", " ").replace("G+A", "G+A").title() for s in valid_stats]
+    
+    # Convert N/A to 0 for chart purposes
+    values1 = []
+    values2 = []
+    for s in valid_stats:
+        v1 = format_value(player1_data.get(s, 0), s)
+        v2 = format_value(player2_data.get(s, 0), s)
+        values1.append(float(v1) if v1 != 'N/A' else 0)
+        values2.append(float(v2) if v2 != 'N/A' else 0)
 
     fig = go.Figure()
 
@@ -142,8 +209,9 @@ player2_id = player_options[player2_name]
 player1_pos = player_positions.get(player1_id, '')
 player2_pos = player_positions.get(player2_id, '')
 
-is_player1_gk = player1_pos == "Goalkeeper"
-is_player2_gk = player2_pos == "Goalkeeper"
+# FIXED: Handle both "GK" and "Goalkeeper"
+is_player1_gk = player1_pos in ["Goalkeeper", "GK"] if player1_pos else False
+is_player2_gk = player2_pos in ["Goalkeeper", "GK"] if player2_pos else False
 
 if is_player1_gk != is_player2_gk:
     st.error("⚠️ You cannot compare goalkeepers with field players! Please select two goalkeepers or two field players.")
@@ -214,6 +282,7 @@ else:
     with col_off:
         st.markdown("**Offensive**")
         for stat in offensive_stats:
+            # All offensive stats default to True now (removed shots)
             if st.checkbox(stat["label"], value=True, key=f"off_{stat['key']}"):
                 selected_stats.append(stat["key"])
     
@@ -237,17 +306,39 @@ if st.button("Compare Players"):
         if comparison:
             st.markdown(f"## Comparison: {comparison['player1']['name']} vs {comparison['player2']['name']}")
             
+            # Check if there are any N/A values
+            has_na = False
+            for stat in selected_stats:
+                v1 = format_value(comparison['player1'].get(stat, 0), stat)
+                v2 = format_value(comparison['player2'].get(stat, 0), stat)
+                if v1 == 'N/A' or v2 == 'N/A':
+                    has_na = True
+                    break
+            
+            if has_na:
+                st.info("ℹ️ Some statistics show 'N/A' - this means data is not available from FBref.")
+            
             radar_fig = create_radar_chart(comparison['player1'], comparison['player2'], selected_stats)
             bar_fig = create_bar_chart(comparison['player1'], comparison['player2'], selected_stats)
             
-            st.plotly_chart(radar_fig, use_container_width=True)
-            st.plotly_chart(bar_fig, use_container_width=True)
+            if radar_fig:
+                st.plotly_chart(radar_fig, use_container_width=True)
+            if bar_fig:
+                st.plotly_chart(bar_fig, use_container_width=True)
             
-            # Display raw data in table
+            # Display raw data in table with N/A formatting
+            player1_values = []
+            player2_values = []
+            for s in selected_stats:
+                v1 = format_value(comparison['player1'].get(s, 0), s)
+                v2 = format_value(comparison['player2'].get(s, 0), s)
+                player1_values.append(format_display_value(v1))
+                player2_values.append(format_display_value(v2))
+            
             df_compare = pd.DataFrame({
-                "Statistic": [s.replace("_", " ").title() for s in selected_stats],
-                comparison['player1']['name']: [comparison['player1'].get(s, 0) or 0 for s in selected_stats],
-                comparison['player2']['name']: [comparison['player2'].get(s, 0) or 0 for s in selected_stats],
+                "Statistic": [s.replace("_", " ").replace("G+A", "G+A").title() for s in selected_stats],
+                comparison['player1']['name']: player1_values,
+                comparison['player2']['name']: player2_values,
             })
             st.dataframe(df_compare, use_container_width=True)
 

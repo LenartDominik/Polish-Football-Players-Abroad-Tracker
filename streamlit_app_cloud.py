@@ -51,7 +51,7 @@ st.markdown("""
 
 # Header
 st.markdown('<div class="main-header">🇵🇱 Polish Players Tracker</div>', unsafe_allow_html=True)
-st.markdown("### Monitoring 100+ Polish footballers playing abroad")
+st.markdown("### Monitoring 90+ Polish footballers playing abroad")
 
 # Sidebar
 with st.sidebar:
