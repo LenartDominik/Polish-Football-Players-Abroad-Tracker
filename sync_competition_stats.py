@@ -50,8 +50,7 @@ def sync_competition_stats_from_matches(db, player_id: int) -> int:
                                    'UEFA Euro Qualifying', 'UEFA Euro', 
                                    'Friendlies (M)', 'Copa América']
             if match.competition in international_comps:
-                # WCQ qualifiers: use the target World Cup year
-                # For 2025-2026 cycle, all matches (2024-2026) use "2026"
+                # WCQ: use the target World Cup year (special logic)
                 if 'WCQ' in match.competition or 'World Cup' in match.competition:
                     if year in [2024, 2025, 2026]:
                         season = '2026'
@@ -62,8 +61,9 @@ def sync_competition_stats_from_matches(db, player_id: int) -> int:
                     else:
                         season = str(year + 1) if month <= 6 else str(year)
                 else:
-                    # Other international: use next year if in first half
-                    season = str(year + 1) if month <= 6 else str(year)
+                    # Other international (Friendlies, Nations League, etc.): 
+                    # Use standard date range logic (already calculated above)
+                    pass  # Keep the season calculated by date range
             
             key = (season, match.competition)
             stats_dict[key]['games'] += 1
