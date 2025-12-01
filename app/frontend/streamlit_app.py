@@ -1196,20 +1196,25 @@ if not filtered_df.empty:
             stats_to_display = gk_stats if (is_goalkeeper and not gk_stats.empty) else comp_stats
             
             # ENHANCEMENT: Add European cup stats from player_matches (separate rows for each competition)
-            # This ensures Champions Lg and Europa Lg show as separate rows
-            if not is_goalkeeper and not matches_df.empty:
-                euro_history = get_european_history_by_competition(row['id'], matches_df)
-                if not euro_history.empty and not stats_to_display.empty:
-                    # Remove aggregated EUROPEAN_CUP entries from comp_stats
-                    # and replace with detailed entries from player_matches
-                    stats_to_display = stats_to_display[stats_to_display['competition_type'] != 'EUROPEAN_CUP'].copy()
-                    # Add European stats from player_matches
-                    stats_to_display = pd.concat([stats_to_display, euro_history], ignore_index=True)
-                    # Sort by season and competition_type
-                    stats_to_display = stats_to_display.sort_values(['season', 'competition_type'], ascending=False)
-                elif not euro_history.empty:
-                    # If comp_stats is empty but we have euro_history, use it
-                    stats_to_display = euro_history
+            # FIXED: Use competition_stats for European Cups (complete data from FBref)
+            # Previously used player_matches which had incomplete data (missing Super Cup, Club World Cup, UEFA Cup, older matches)
+            # Now keeping EUROPEAN_CUP data from competition_stats for full historical accuracy (156 matches vs 120)
+            # player_matches is still used for detailed match-by-match view in Match Logs section
+            
+            # NOTE: Commenting out the code that replaced competition_stats with player_matches
+            # if not is_goalkeeper and not matches_df.empty:
+            #     euro_history = get_european_history_by_competition(row['id'], matches_df)
+            #     if not euro_history.empty and not stats_to_display.empty:
+            #         # Remove aggregated EUROPEAN_CUP entries from comp_stats
+            #         # and replace with detailed entries from player_matches
+            #         stats_to_display = stats_to_display[stats_to_display['competition_type'] != 'EUROPEAN_CUP'].copy()
+            #         # Add European stats from player_matches
+            #         stats_to_display = pd.concat([stats_to_display, euro_history], ignore_index=True)
+            #         # Sort by season and competition_type
+            #         stats_to_display = stats_to_display.sort_values(['season', 'competition_type'], ascending=False)
+            #     elif not euro_history.empty:
+            #         # If comp_stats is empty but we have euro_history, use it
+            #         stats_to_display = euro_history
             
             if not stats_to_display.empty and len(stats_to_display) > 0:
                 st.write("---")
