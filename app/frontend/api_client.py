@@ -56,18 +56,7 @@ class APIClient:
             return pd.DataFrame()
         
         df = pd.DataFrame(data)
-        if not df.empty:
-            # Rename columns to match old structure
-            column_mapping = {
-                'id': 'id',
-                'name': 'name',
-                'current_club': 'team',
-                'current_league': 'league',
-                'nationality': 'nationality',
-                'position': 'position',
-                'last_updated': 'last_updated'
-            }
-            df = df.rename(columns=column_mapping)
+        # No need to rename - API already returns correct column names (team, league, etc.)
         return df
     
     def get_player(self, player_id: int) -> Optional[Dict]:
@@ -101,7 +90,7 @@ class APIClient:
     
     def get_player_stats(self, player_id: int) -> Dict[str, pd.DataFrame]:
         """Get all stats for a player (competition_stats, goalkeeper_stats, player_matches)"""
-        data = self._make_request("GET", f"/comparison/players/{player_id}/stats")
+        data = self._make_request("GET", f"/api/comparison/players/{player_id}/stats")
         if data is None:
             return {
                 'competition_stats': pd.DataFrame(),

@@ -3,8 +3,11 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 from typing import List, Dict
+import os
 
-API_URL = "http://127.0.0.1:8000/api"
+# Get API URL from environment or use default
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_URL = f"{API_BASE_URL}/api"
 
 
 st.set_page_config(page_title="Compare players", page_icon="⚖️", layout="wide")
@@ -16,7 +19,7 @@ st.markdown("<h3 style='text-align: center; color: white;'>(league stats)</h3>",
 @st.cache_data(ttl=600)
 def get_all_players():
     try:
-        resp = requests.get(f"{API_URL}/players")
+        resp = requests.get(f"{API_URL}/players/")
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
