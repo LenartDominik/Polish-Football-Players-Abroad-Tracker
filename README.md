@@ -154,8 +154,6 @@ python -m playwright install chromium
 Utwórz plik `.env` w głównym katalogu (lub skopiuj z `.env.example`):
 
 ```env
-# Baza danych (Development - SQLite)
-DATABASE_URL=sqlite:///./players.db
 
 # Baza danych (Production - Supabase PostgreSQL - DARMOWE!)
 # DATABASE_URL=postgresql://postgres.xxxxx:[YOUR-PASSWORD]@aws-1-eu-west-1.pooler.supabase.com:6543/postgres
@@ -398,11 +396,15 @@ python migrate_sqlite_to_postgres.py verify   # Sprawdzenie
 
 **`competition_stats`** - statystyki zawodników (nie-bramkarzy)
 - player_id, season, competition_type, competition_name
-- games, goals, assists, xg, xa, minutes, yellow_cards, red_cards
+- games, goals, assists, xg, xa, npxg, minutes, yellow_cards, red_cards, penalty_goals
+- **competition_type:** LEAGUE, EUROPEAN_CUP, DOMESTIC_CUP, NATIONAL_TEAM
+- **Uwaga:** Mecze reprezentacji używają roku kalendarzowego (np. "2025"), nie sezonu ("2025-2026")
+- **Ograniczenie:** Kwalifikacje Champions League są agregowane z Europa League jako "Europa Lg" (standard FBref)
 
 **`goalkeeper_stats`** - statystyki bramkarzy
 - player_id, season, competition_type, competition_name
 - games, saves, clean_sheets, goals_against, save_percentage, penalties_saved
+- **Uwaga:** Te same zasady co competition_stats dla sezonów i typów rozgrywek
 
 **`player_matches`** - szczegółowe statystyki z pojedynczych meczów
 - player_id, match_date, competition, opponent, result
@@ -498,6 +500,12 @@ python tools/check_reqs.py
 | 🎨 Frontend Dashboard | `.\start_frontend.ps1` lub `streamlit run app/frontend/streamlit_app.py` |
 
 ### API Endpoints
+
+**Dokumentacja interaktywna:**
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+**Główne endpointy:**
 
 | Endpoint | Metoda | Opis |
 |----------|--------|------|
@@ -714,6 +722,21 @@ python -c "from app.backend.main import send_sync_notification_email; send_sync_
 - **Automatyczna synchronizacja**: 2x w tygodniu (Poniedziałek/Czwartek 6:00)
 - **Cloud deployment ready**: Render.com, Railway, DigitalOcean, AWS
 - **Email notifications**: HTML raporty z wynikami synchronizacji
+
+## 🔧 Najnowsze Zmiany (v0.7.4)
+
+### ✅ Poprawki:
+1. **Season Total - Reprezentacja** - Sekcja "Season Total" teraz uwzględnia mecze reprezentacji z roku kalendarzowego (np. 2025)
+2. **European Cups Details** - Details pokazuje wszystkie europejskie puchary osobno (dla graczy z wieloma pucharami)
+3. **Compare Players** - Strona porównania ograniczona tylko do aktualnego sezonu 2025-26
+
+### ⚠️ Znane Ograniczenia:
+- **Kwalifikacje Champions League:** FBref agreguje kwalifikacje CL z fazą grupową Europa League jako "Europa Lg". Zobacz: `LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md`
+
+### 📚 Dokumentacja:
+- `BUGFIX_SEASON_TOTAL_NATIONAL_TEAM.md` - Poprawka reprezentacji w Season Total
+- `BUGFIX_EUROPEAN_CUPS_SEPARATE_ROWS.md` - Osobne wiersze dla każdego pucharu
+- `LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md` - Wyjaśnienie ograniczenia kwalifikacji CL
 
 ## 🤝 Wkład w projekt
 

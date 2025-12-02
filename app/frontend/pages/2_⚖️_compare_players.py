@@ -221,15 +221,9 @@ if is_player1_gk != is_player2_gk:
     st.error("⚠️ You cannot compare goalkeepers with field players! Please select two goalkeepers or two field players.")
     st.stop()
 
-season = st.selectbox("Season", options=["2025-26 (Current)", "2024-25", "2023-24", "2022-23"])
-# Default to 2025-2026 season
-if season == "2025-26 (Current)":
-    season = None  # None triggers backend to use 2025-2026
-else:
-    # Convert format from "2024-25" to "2024-2025"
-    if "-" in season and len(season) == 7:
-        parts = season.split("-")
-        season = f"20{parts[0][-2:]}-20{parts[1]}"
+# Fixed to current season only (2025-26)
+st.info("📅 Comparing current season: 2025-26")
+season = None  # None triggers backend to use 2025-2026
 
 # Determine player type and get appropriate stats
 player_type = "goalkeeper" if is_player1_gk else "field_player"

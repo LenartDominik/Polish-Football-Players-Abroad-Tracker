@@ -991,13 +991,29 @@ app = FastAPI(
     ## ✨ Features
     
     - 🕸️ **Automated scraping** from FBref.com using Playwright
-    - 📊 **Comprehensive statistics**: Goals, assists, xG, xA, minutes, cards
+    - 📊 **Comprehensive statistics**: Goals, assists, xG, xA, npxG, minutes, cards, penalty goals
     - 🥅 **Goalkeeper stats**: Saves, clean sheets, save percentage, penalties
     - 🏆 **Competition breakdown**: League, European Cups, National Team, Domestic Cups
-    - 🤖 **Automated scheduler**: Stats sync 2x/week (Mon/Thu 6:00 AM), Matchlogs sync 1x/week (Tue 7:00 AM)        │
-│   - 📧 **Email notifications**: HTML reports after each sync                                                      │
-│   - ⚡ **Rate limiting**: 12s between requests (FBref ToS compliant)                                              │
-│   - 💾 **Database**: Supabase PostgreSQL (500MB free tier, cloud-ready) 
+    - 🤖 **Automated scheduler**: Stats sync 2x/week (Mon/Thu 6:00 AM), Matchlogs sync 1x/week (Tue 7:00 AM)
+    - 📧 **Email notifications**: HTML reports after each sync
+    - ⚡ **Rate limiting**: 12s between requests (FBref ToS compliant)
+    - 💾 **Database**: Supabase PostgreSQL (500MB free tier, cloud-ready)
+    
+    ## 🔧 Latest Updates (v0.7.4)
+    
+    ### ✅ Fixes:
+    - **Season Total**: Now includes national team matches from calendar year (e.g., 2025)
+    - **European Cups Details**: Shows all European cups separately (for players with multiple competitions)
+    - **Compare Players**: Limited to current season 2025-26 only
+    
+    ### ⚠️ Known Limitations:
+    - **Champions League Qualifications**: FBref aggregates CL qualifications with Europa League group stage as "Europa Lg" (industry standard)
+    - **National Team**: Uses calendar year (2025) instead of season format (2025-2026)
+    
+    ### 📚 Documentation:
+    - `BUGFIX_SEASON_TOTAL_NATIONAL_TEAM.md` - Season Total fix details
+    - `BUGFIX_EUROPEAN_CUPS_SEPARATE_ROWS.md` - European Cups display fix
+    - `LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md` - CL qualifications explanation 
     
     ## 📚 Documentation
     
@@ -1035,7 +1051,7 @@ app = FastAPI(
     - Railway, Heroku, AWS, DigitalOcean
     - See `RENDER_DEPLOYMENT.md` for instructions
     """,
-    version="0.7.3",
+    version="0.7.4",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",

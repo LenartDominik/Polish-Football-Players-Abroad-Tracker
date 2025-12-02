@@ -1,6 +1,6 @@
 # Polish Players Tracker - Frontend
 
-**Wersja:** v0.7.3 | **Status:** ✅ Production Ready
+**Wersja:** v0.7.4 | **Status:** ✅ Production Ready
 
 ## ⚖️ Legal Notice
 
@@ -14,6 +14,17 @@
 ---
 
 Interaktywny dashboard w Streamlit do przeglądania i analizy danych polskich piłkarzy grających za granicą.
+
+## 📊 Najnowsze Zmiany (v0.7.4)
+
+### ✅ Poprawki:
+1. **Season Total** - Teraz uwzględnia mecze reprezentacji z roku kalendarzowego (2025)
+2. **European Cups Details** - Pokazuje wszystkie europejskie puchary osobno (dla graczy z wieloma pucharami)
+3. **Compare Players** - Ograniczone tylko do aktualnego sezonu 2025-26
+
+### ⚠️ Znane Ograniczenia:
+- **Kwalifikacje Champions League:** FBref agreguje kwalifikacje CL z Europa League jako "Europa Lg" (standard branżowy)
+- Zobacz: `../../LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md`
 
 ## 🚀 Szybki start
 
@@ -169,6 +180,19 @@ streamlit run streamlit_app.py --server.port 8502
 # Zainstaluj wszystkie zależności
 pip install -r requirements.txt
 ```
+
+### Season Total nie zawiera meczów reprezentacji
+
+**Problem rozwiązany w v0.7.4:**
+- Dodano funkcję `get_season_filters()` która automatycznie uwzględnia rok kalendarzowy (2025) dla reprezentacji
+- Season Total teraz sumuje: Liga + Puchary + Reprezentacja
+
+### European Cups - brakuje niektórych rozgrywek
+
+**Uwaga:**
+- FBref agreguje kwalifikacje Champions League z Europa League jako "Europa Lg"
+- To jest **standard branżowy**, nie błąd aplikacji
+- Zobacz: `LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md`
 
 ### Dashboard się nie odświeża
 - Naciśnij `R` w przeglądarce aby wymusić odświeżenie

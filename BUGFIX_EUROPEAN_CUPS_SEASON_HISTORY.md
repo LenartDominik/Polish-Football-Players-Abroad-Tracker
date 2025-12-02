@@ -2,7 +2,7 @@
 
 ## Problem
 
-W tabeli "Season Statistics History (All Competitions)" dla graczy którzy grali w sezonie 2024/25 w różnych europejskich pucharach (np. kwalifikacje Champions League → Europa League), pokazywał się tylko **jeden zagregowany rząd** zamiast osobnych rzędów dla każdej rozgrywki.
+W tabeli "Season Statistics History (All Competitions)" dla graczy którzy grali w sezonie 2025/2026 w różnych europejskich pucharach (np. kwalifikacje Champions League → Europa League), pokazywał się tylko **jeden zagregowany rząd** zamiast osobnych rzędów dla każdej rozgrywki.
 
 ### Przykład - Szymański sezon 2024-2025:
 - **Przed naprawą:** 1 rząd "Europa Lg" z częściowymi danymi

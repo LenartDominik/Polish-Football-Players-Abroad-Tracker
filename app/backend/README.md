@@ -234,9 +234,15 @@ Statystyki zawodników w różnych rozgrywkach (dla zawodników nie-bramkarzy).
 | assists | Asysty |
 | xg | Expected Goals |
 | xa | Expected Assists |
+| npxg | Non-Penalty Expected Goals |
+| penalty_goals | Bramki z karnych |
 | minutes | Minuty |
 | yellow_cards | Żółte kartki |
 | red_cards | Czerwone kartki |
+
+**Uwagi:**
+- Mecze reprezentacji używają **roku kalendarzowego** (np. "2025"), nie sezonu ("2025-2026")
+- Kwalifikacje Champions League są **agregowane** z Europa League jako "Europa Lg" (standard FBref)
 
 #### `goalkeeper_stats`
 Statystyki bramkarzy w różnych rozgrywkach.
@@ -245,13 +251,17 @@ Statystyki bramkarzy w różnych rozgrywkach.
 |---------|------|
 | player_id | Klucz obcy do gracza |
 | season | Sezon |
-| competition_type | Typ rozgrywek |
+| competition_type | Typ rozgrywek (LEAGUE / EUROPEAN_CUP / DOMESTIC_CUP / NATIONAL_TEAM) |
+| competition_name | Nazwa rozgrywek |
 | games | Liczba meczów |
 | saves | Obrony |
 | clean_sheets | Czyste konta |
 | goals_against | Bramki stracone |
 | save_percentage | % obron |
 | penalties_saved | Obronione karne |
+
+**Uwagi:**
+- Te same zasady co `competition_stats` dla sezonów (reprezentacja = rok kalendarzowy)
 
 #### `player_matches`
 Szczegółowe statystyki z pojedynczych meczów (matchlogs).
