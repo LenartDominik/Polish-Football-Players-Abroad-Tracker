@@ -501,15 +501,19 @@ python tools/check_reqs.py
 
 | Endpoint | Metoda | Opis |
 |----------|--------|------|
-| `/` | GET | Strona główna API |
+| `/` | GET | Strona główna API + scheduler status |
 | `/health` | GET | Health check (dla monitoringu) |
-| `/api/players` | GET | Lista wszystkich graczy z filtrami |
-| `/api/players/{id}` | GET | Szczegóły gracza + statystyki |
-| `/api/players/{id}/competition-stats` | GET | Statystyki po rozgrywkach |
-| `/api/players/{id}/matches` | GET | Match logs gracza |
-| `/api/players/{id}/matches/stats` | GET | Statystyki zagregowane z meczów |
+| `/api/players/` | GET | Lista wszystkich graczy |
+| `/api/players/{id}` | GET | Szczegóły gracza |
+| `/api/players/stats/competition` | GET | Wszystkie statystyki ligowe/europejskie |
+| `/api/players/stats/goalkeeper` | GET | Wszystkie statystyki bramkarskie |
+| `/api/players/stats/matches` | GET | Wszystkie mecze (match logs) |
+| `/api/comparison/players/{id}/stats` | GET | Statystyki gracza do porównania |
 | `/api/comparison/compare` | GET | Porównaj dwóch graczy |
-| `/api/matchlogs` | GET | Wszystkie match logs z filtrami |
+| `/api/comparison/available-stats` | GET | Dostępne statystyki do porównania |
+| `/api/matchlogs/{player_id}` | GET | Match logs gracza (z filtrami) |
+| `/api/matchlogs/{player_id}/stats` | GET | Agregowane statystyki z meczów |
+| `/api/matchlogs/match/{match_id}` | GET | Szczegóły pojedynczego meczu |
 
 **📚 Dokumentacja API:**
 - **Swagger UI (interaktywna):** http://localhost:8000/docs
@@ -537,8 +541,8 @@ python tools/check_reqs.py
 - 🚀 [Render Deployment Guide](RENDER_DEPLOYMENT.md) - **Darmowy hosting 24/7!**
 - ☁️ [Streamlit Cloud Deployment](STREAMLIT_CLOUD_DEPLOYMENT.md) - **Darmowy hosting frontendu!**
 - 🏢 [Commercial Deployment Guide](COMMERCIAL_DEPLOYMENT.md) - **PostgreSQL + Streamlit Cloud**
-- 📖 [API Documentation](API_DOCUMENTATION.md) - Szczegółowa dokumentacja API
-- 📖 [API Endpoints Guide](API_ENDPOINTS_GUIDE.md) - Przewodnik po endpointach
+- 📖 [API Documentation](API_DOCUMENTATION.md) - Kompletna dokumentacja API (wszystkie endpointy, przykłady)
+- 📖 [API Complete Reference](API_COMPLETE_REFERENCE.md) - Szybka referencja endpointów
 - ⚖️ [Legal Notice](LEGAL_NOTICE.md) - **WAŻNE - Przeczytaj przed użyciem!**
 - 🎓 [Credits](CREDITS.md) - Podziękowania i atrybuty
 
