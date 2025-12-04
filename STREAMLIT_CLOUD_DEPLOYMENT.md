@@ -222,7 +222,9 @@ git push origin main
 
 ---
 
-### Krok 2.3: Dodaj Secrets
+### Krok 2.3: Dodaj Secrets (WAŻNE!)
+
+**⚠️ To jest NAJWAŻNIEJSZY krok - bez tego aplikacja NIE BĘDZIE DZIAŁAĆ!**
 
 **W Streamlit Cloud:**
 1. **App settings** (⚙️)
@@ -230,11 +232,16 @@ git push origin main
 3. Dodaj:
 
 ```toml
-# .streamlit/secrets.toml
-BACKEND_API_URL = "https://polish-players-tracker-xxxx.onrender.com"
+# Backend API URL - WYMAGANE!
+BACKEND_API_URL = "https://polish-players-backend.onrender.com"
 ```
 
-**Zamień `xxxx` na swój Render URL!**
+**📖 Szczegółowy przewodnik:** [STREAMLIT_SECRETS_SETUP.md](STREAMLIT_SECRETS_SETUP.md)
+
+**Zamień URL na swój Render backend URL:**
+- Znajdź go w Render Dashboard (górna część strony)
+- **NIE** dodawaj `/` na końcu URL
+- Zapisz secrets i poczekaj ~30s na restart aplikacji
 
 ---
 

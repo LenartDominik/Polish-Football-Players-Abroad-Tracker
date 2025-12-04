@@ -527,6 +527,7 @@ python tools/check_reqs.py
 - 🏗️ [Architecture Diagram](ARCHITECTURE_DIAGRAM.md) - Diagram architektury systemu
 - 🚀 [Render Deployment Guide](RENDER_DEPLOYMENT.md) - **Darmowy hosting 24/7!**
 - ☁️ [Streamlit Cloud Deployment](STREAMLIT_CLOUD_DEPLOYMENT.md) - **Darmowy hosting frontendu!**
+- 🔐 [Streamlit Secrets Setup](STREAMLIT_SECRETS_SETUP.md) - **Konfiguracja połączenia z backendem**
 - 🏢 [Commercial Deployment Guide](COMMERCIAL_DEPLOYMENT.md) - **PostgreSQL + Streamlit Cloud**
 - 📖 [API Documentation](API_DOCUMENTATION.md) - Kompletna dokumentacja API (wszystkie endpointy, przykłady)
 - 📖 [API Complete Reference](API_COMPLETE_REFERENCE.md) - Szybka referencja endpointów

@@ -14,8 +14,21 @@ class APIClient:
     def __init__(self, base_url: Optional[str] = None):
         """Initialize API client with base URL"""
         if base_url is None:
-            # Try to get from environment or use default
-            base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
+            # Try to get from Streamlit secrets first, then environment, then default
+            try:
+                # Streamlit Cloud: read from secrets
+                base_url = st.secrets.get("BACKEND_API_URL", None)
+            except (AttributeError, FileNotFoundError):
+                # Not in Streamlit Cloud or secrets not configured
+                base_url = None
+            
+            # Fallback to environment variable
+            if base_url is None:
+                base_url = os.getenv("API_BASE_URL", None)
+            
+            # Final fallback to localhost
+            if base_url is None:
+                base_url = "http://localhost:8000"
         
         self.base_url = base_url.rstrip("/")
         self.timeout = 30  # seconds
@@ -137,17 +150,31 @@ class APIClient:
 
 # Global API client instance
 @st.cache_resource
-def get_api_client() -> APIClient:
+def get_api_client(api_url=None) -> APIClient:
     """Get cached API client instance"""
-    # Check if running locally or in cloud
-    api_url = os.getenv("API_BASE_URL")
+    if api_url is not None:
+        return APIClient(api_url)
     
-    if api_url is None:
-        # Try to detect if we're in Streamlit Cloud
-        if os.getenv("STREAMLIT_SHARING_MODE") or os.getenv("IS_STREAMLIT_CLOUD"):
-            api_url = os.getenv("RENDER_BACKEND_URL", "https://your-backend.onrender.com")
-        else:
-            api_url = "http://localhost:8000"
+    # Priority order:
+    # 1. Streamlit secrets (for Streamlit Cloud)
+    # 2. Environment variables (for local/Render)
+    # 3. Default localhost
     
-    return APIClient(api_url)
+    api_url_env = None
+    
+    # Try Streamlit secrets first
+    try:
+        api_url_env = st.secrets.get("BACKEND_API_URL", None)
+        if api_url_env:
+            return APIClient(api_url_env)
+    except (AttributeError, FileNotFoundError):
+        pass
+    
+    # Try environment variables
+    api_url_env = os.getenv("API_BASE_URL")
+    if api_url_env:
+        return APIClient(api_url_env)
+    
+    # Default to localhost
+    return APIClient("http://localhost:8000")
 
