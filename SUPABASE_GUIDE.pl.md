@@ -1,4 +1,4 @@
-﻿# 🚀 Przewodnik: Praca z Supabase
+# 🚀 Przewodnik: Praca z Supabase
 
 ## ✅ Co zostało zmienione?
 
@@ -95,7 +95,7 @@ Możesz również zobaczyć dane bezpośrednio w Supabase:
 
 1. Wejdź na: https://supabase.com/dashboard
 2. Wybierz projekt
-3. Click **Table Editor** (ikona tabeli)
+3. Kliknij **Table Editor** (ikona tabeli)
 4. Wybierz tabelę:
    - `players` - Lista graczy
    - `competition_stats` - Statystyki z podziałem na rozgrywki
@@ -107,8 +107,8 @@ Możesz również zobaczyć dane bezpośrednio w Supabase:
 
 ### **PostgreSQL to jedyna wspierana baza danych**
 - ✅ Stabilna, skalowalna, produkcyjna
-- ✅ Automatic backups w Supabase
-- ✅ Management dashboard danymi
+- ✅ Automatyczne backupy w Supabase
+- ✅ Dashboard do zarządzania danymi
 - ✅ DARMOWE 500MB dla projektów hobby!
 
 ### **Zalecenia:**
