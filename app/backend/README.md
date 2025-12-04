@@ -1,6 +1,6 @@
 # Polish Football Data Hub International - Backend API
 
-**Wersja:** v0.7.3 | **Status:** ✅ Production Ready
+****Status:** ✅ Production Ready
 
 ## ⚖️ Legal Notice
 

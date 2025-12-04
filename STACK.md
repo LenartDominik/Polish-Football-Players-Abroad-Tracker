@@ -1,14 +1,15 @@
 # 🛠️ Stack Technologiczny - Polish Football Data Hub International
 
-## 📋 Przegląd projektu
+## 📋 Overview
 
-Aplikacja full-stack do śledzenia polskich piłkarzy grających za granicą.
+Full-stack web application for tracking Polish footballers playing abroad with real-time statistics.
 
-- **Typ:** Full-stack web application
-- **Architektura:** Monorepo (backend + frontend)
-- **Język:** Python 3.10+
-- **Baza danych:** PostgreSQL (Supabase)
-- **Deployment:** Local/Self-hosted
+**Architecture:** Modern Python-based web application
+- **Backend:** FastAPI REST API
+- **Frontend:** Streamlit multi-page dashboard
+- **Database:** PostgreSQL (Supabase)
+- **Deployment:** Cloud-ready (Render.com + Streamlit Cloud)
+- **Data Source:** FBref.com (automated scraping)
 
 ---
 
@@ -317,13 +318,16 @@ python -m venv venv
 
 ---
 
-## 🔮 Przyszłe rozszerzenia (opcjonalne)
+## 🎯 Current Features
 
-### Backend:
-- [x] PostgreSQL (Supabase) - zaimplementowane!
-- [ ] Redis cache dla częstych zapytań
-- [ ] WebSockets dla real-time updates
-- [ ] GraphQL API (jako alternatywa dla REST)
+### ✅ Implemented:
+- **PostgreSQL Database** - Production-ready with Supabase
+- **Automated Scraping** - Playwright-based FBref scraper
+- **REST API** - Full CRUD operations with FastAPI
+- **Scheduler** - Automatic data synchronization (2-3x/week)
+- **Multi-page Frontend** - Streamlit dashboard with player comparison
+- **Cloud Deployment** - Ready for Render.com + Streamlit Cloud
+- **Email Notifications** - HTML reports after sync
 
 ### Frontend:
 - [ ] React/Next.js (bardziej customizable)

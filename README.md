@@ -1,22 +1,8 @@
 # 🇵🇱 Polish Football Data Hub International
 
-**Wersja:** v0.7.3 | **Status:** ✅ Production Ready | **Ostatnia aktualizacja:** 25.11.2025
+**Status:** ✅ Production Ready | **Database:** PostgreSQL (Supabase) | **Deployment:** Cloud-Ready
 
-> 📚 **[Zobacz co nowego w v0.7.3](FINAL_COMPLETE_SUMMARY_v0.7.3.md)**
-
-## 🆕 Najnowsze Zmiany w v0.7.3
-
-### Nowe Funkcjonalności:
-- ✅ **Porównywanie bramkarzy** - Pełne wsparcie dla porównań GK vs GK
-- ✅ **Statystyki kadry według roku kalendarzowego** - National Team (2025) używa player_matches
-- ✅ **Wykluczenie Nations League 2024-2025** - Poprawne liczenie meczów kadry w 2025
-- ✅ **Enhanced Stats dla zawodników z pola** - xGI, G+A/90, metryki per 90
-- ✅ **Scheduler z e-mail notifications** - Automatyczna synchronizacja 3x/tydzień
-
-### Poprawki:
-- 🐛 Naprawiono błąd w API comparison dla bramkarzy (nieprawidłowe nazwy kolumn)
-- 🐛 Naprawiono liczenie meczów reprezentacji (wykluczono NL 2024-25 z roku 2025)
-- 🐛 Usunięto kolumny Shots/SoT z Season Statistics History  
+> 📊 Real-time monitoring and analysis of 90+ Polish footballers playing abroad  
 > ⚖️ **[Informacje prawne - Ważne!](LEGAL_NOTICE.md)** | 🚀 **[Deployment Guide](STREAMLIT_CLOUD_DEPLOYMENT.md)**
 
 ## ⚖️ Legal Notice
@@ -719,108 +705,17 @@ python -c "from app.backend.main import send_sync_notification_email; send_sync_
 - **Cloud deployment ready**: Render.com, Railway, DigitalOcean, AWS
 - **Email notifications**: HTML raporty z wynikami synchronizacji
 
-## 🔧 Najnowsze Zmiany (v0.7.4)
+## ⚠️ Known Limitations
 
-### ✅ Poprawki:
-1. **Season Total - Reprezentacja** - Sekcja "Season Total" teraz uwzględnia mecze reprezentacji z roku kalendarzowego (np. 2025)
-2. **European Cups Details** - Details pokazuje wszystkie europejskie puchary osobno (dla graczy z wieloma pucharami)
-3. **Compare Players** - Strona porównania ograniczona tylko do aktualnego sezonu 2025-26
+- **Champions League Qualifications**: FBref aggregates CL qualifications with Europa League as "Europa Lg" (industry standard)
+- **National Team Stats**: Uses calendar year (e.g., 2025) instead of season format (2025-2026)
 
-### ⚠️ Znane Ograniczenia:
-- **Kwalifikacje Champions League:** FBref agreguje kwalifikacje CL z fazą grupową Europa League jako "Europa Lg". Zobacz: `LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md`
+## 🤝 Contributing
 
-### 📚 Dokumentacja:
-- `BUGFIX_SEASON_TOTAL_NATIONAL_TEAM.md` - Poprawka reprezentacji w Season Total
-- `BUGFIX_EUROPEAN_CUPS_SEPARATE_ROWS.md` - Osobne wiersze dla każdego pucharu
-- `LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md` - Wyjaśnienie ograniczenia kwalifikacji CL
-
-## 🤝 Wkład w projekt
-
-Projekt jest otwarty na sugestie i poprawki. W przypadku znalezienia błędów lub pomysłów na ulepszenia:
-1. Sprawdź istniejące issues
-2. Utwórz nowy issue z opisem
-3. Pull requesty są mile widziane!
-
-## 📝 Changelog
-
-### v0.6.0 (2025-01) - Matchlogs Scheduler 📋
-- 📋 **Matchlogs Scheduler** - automatyczna synchronizacja szczegółowych logów meczowych
-  - Nowy job schedulera: wtorek 7:00 (Europe/Warsaw)
-  - Funkcja `scheduled_sync_matchlogs()` - sync dla wszystkich graczy
-  - Funkcja `sync_player_matchlogs()` - sync pojedynczego gracza
-  - Rate limiting 12s między requestami
-- 📧 **Email Notifications dla Matchlogs** - dedykowane HTML raporty
-  - Podsumowanie liczby zsynchronizowanych meczów
-  - Lista graczy z błędami synchronizacji
-  - Kolorowe formatowanie (niebieski header)
-- 📊 **Rozszerzone dane meczowe**
-  - Szczegółowe statystyki dla każdego meczu
-  - Goals, assists, xG, xA, shots, passes, tackles
-  - Touches, dribbles, fouls, cards
-- 📚 **Dokumentacja**
-  - `MATCHLOGS_SCHEDULER.md` - pełna dokumentacja funkcjonalności
-  - Zaktualizowany README
-  - Rozszerzone API docs
-
-### v0.5.0 (2025-01) - Cloud Deployment & Email Notifications 🚀
-- ☁️ **Render.com Deployment** - darmowy hosting 24/7
-  - Konfiguracja `render.yaml` i `Dockerfile`
-  - Persistent disk dla bazy danych
-  - Automatyczne deploye z GitHub
-  - Dokumentacja: `RENDER_DEPLOYMENT.md`
-- 📧 **Email Notifications** - HTML raporty po synchronizacji
-  - Gmail/Outlook/SendGrid support
-  - App Password authentication
-  - Szczegółowe raporty z wynikami i błędami
-  - Dokumentacja: `EMAIL_SETUP_GUIDE.md`
-- 🌍 **Timezone Support** - scheduler w polskim czasie
-  - `SCHEDULER_TIMEZONE=Europe/Warsaw`
-  - Automatyczne wykrywanie czy działa na Render czy lokalnie
-- 📚 **Rozszerzona dokumentacja**
-  - `DEPLOYMENT_SUMMARY.md` - FAQ i troubleshooting
-  - Zaktualizowany README z wszystkimi funkcjami
-  - Swagger UI i ReDoc z pełną dokumentacją API
-
-
-### v0.7.5 (2025-11-29) - Bugfixes & Season Filtering 🐛
-
-**Naprawy:**
-- ✅ Usunięto 621 duplikatów meczów z bazy Supabase
-- ✅ Naprawiono filtrowanie sezonów (rok → daty lipiec-czerwiec)
-  - Sezon 2025-2026 = 1 lipca 2025 - 30 czerwca 2026
-  - API zgodne z frontendem Streamlit
-- ✅ Usunięto post_shot_xg z API /players/stats/goalkeeper
-- ✅ Naprawiono wyświetlanie penalties: 0 zamiast N/A
-
-**Techniczne:**
-- Zamieniono extract('year') na date range filtering
-- COALESCE dla penalties w SQL (NULL → 0)
-- Frontend: penalties_saved w valid_zero_stats
-
-### v0.4.0 (2025-01) - Playwright Upgrade & Scheduler 🚀
-- ✨ **Playwright Scraper** - modernizacja scrapera z użyciem headless browser
-  - Zastąpiono cloudscraper Playwright
-  - Lepsza stabilność i niezawodność
-  - Rate limiting 12s (zgodny z ToS FBref)
-- ✨ **Scheduler** - automatyczna synchronizacja 2x w tygodniu
-  - Poniedziałek i czwartek o 6:00 (Europe/Warsaw)
-  - Async scheduler z APScheduler
-- 🔧 **API v2** - nowe endpointy z prefiksem `/api`
-  - `/api/players`, `/api/comparison`, `/api/matches`, `/api/matchlogs`
-  - Health check endpoint: `/health`
-- 📊 **Ulepszone statystyki** - pełne rozbicie na typy rozgrywek
-  - Liga, Puchary Europejskie, Reprezentacja, Puchary krajowe
-  - Dedykowane statystyki bramkarzy
-
-### v0.3.0 (2025-11) - FBref Integration
-- ✨ FBref Web Scraper (cloudscraper)
-- 📊 92/97 graczy zsynchronizowanych
-
-### v0.2.0 (2025-11)
-- ✨ APScheduler, live matches
-
-### v0.1.0
-- 🎉 Pierwsza wersja
+This project is open to suggestions and improvements. If you find bugs or have ideas:
+1. Check existing issues
+2. Create a new issue with description
+3. Pull requests are welcome!
 
 ## 📝 Licencja
 

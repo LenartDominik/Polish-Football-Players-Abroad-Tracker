@@ -999,59 +999,26 @@ app = FastAPI(
     - ⚡ **Rate limiting**: 12s between requests (FBref ToS compliant)
     - 💾 **Database**: Supabase PostgreSQL (500MB free tier, cloud-ready)
     
-    ## 🔧 Latest Updates (v0.7.4)
+    ## 🚀 Quick Start
     
-    ### ✅ Fixes:
-    - **Season Total**: Now includes national team matches from calendar year (e.g., 2025)
-    - **European Cups Details**: Shows all European cups separately (for players with multiple competitions)
-    - **Compare Players**: Limited to current season 2025-26 only
-    
-    ### ⚠️ Known Limitations:
-    - **Champions League Qualifications**: FBref aggregates CL qualifications with Europa League group stage as "Europa Lg" (industry standard)
-    - **National Team**: Uses calendar year (2025) instead of season format (2025-2026)
-    
-    ### 📚 Documentation:
-    - `BUGFIX_SEASON_TOTAL_NATIONAL_TEAM.md` - Season Total fix details
-    - `BUGFIX_EUROPEAN_CUPS_SEPARATE_ROWS.md` - European Cups display fix
-    - `LIMITATION_CHAMPIONS_LEAGUE_QUALIFICATIONS.md` - CL qualifications explanation 
+    1. **Browse Players**: `/api/players` - Get all tracked players
+    2. **Player Details**: `/api/players/{id}` - Detailed statistics for specific player
+    3. **Compare Players**: `/api/comparison/compare` - Side-by-side player comparison
+    4. **Match Logs**: `/api/matchlogs/{player_id}` - Game-by-game performance data
+    5. **Health Check**: `/health` - Monitor API status
     
     ## 📚 Documentation
     
-    - **Swagger UI**: Interactive API testing (you're here!)
+    - **Swagger UI**: Interactive API testing (you're viewing it now!)
     - **ReDoc**: Alternative documentation at `/redoc`
-    - **Health Check**: Monitor API status at `/health`
-    - **Full Docs**: See `README.md`, `API_ENDPOINTS_GUIDE.md`, `LICENSE`, `CREDITS.md`
+    - **GitHub**: [Full Documentation](https://github.com/LenartDominik/Polish-Football-Data-Hub-International)
     
-    ## 🔗 Links
+    ## 🔄 Automated Data Sync
     
-    - **FBref**: [Data Source](https://fbref.com/) (Sports Reference LLC)
-    - **GitHub**: [Project Repository](https://github.com/LenartDominik/Polish-Football-Data-Hub-International)
-    - **LICENSE**: MIT License + Data Attribution (see repository)
-    - **CREDITS**: Full attribution (see `CREDITS.md`)
-    - **Render.com**: Free hosting available!
-    
-    ## 🚀 Quick Start
-    
-    1. Try `/api/players` to see all players
-    2. Use `/api/players/{id}` for player details
-    3. Compare players with `/api/comparison/compare`
-    4. View match logs at `/api/matchlogs/{player_id}`
-    5. Get match summary at `/api/matchlogs/{player_id}/summary`
-    
-    ## 📋 Scheduler Jobs
-    
-    - **Stats Sync**: Monday & Thursday at 06:00 (Europe/Warsaw)
-    - **Matchlogs Sync**: Tuesday at 07:00 (Europe/Warsaw)
-    - Enable with: `ENABLE_SCHEDULER=true` in environment variables
-    
-    ## 🌐 Deployment
-    
-    This API is cloud-ready and can be deployed to:
-    - Render.com (free tier available!)
-    - Railway, Heroku, AWS, DigitalOcean
-    - See `RENDER_DEPLOYMENT.md` for instructions
+    - **Player Stats**: Monday & Thursday at 06:00 (Europe/Warsaw)
+    - **Match Logs**: Tuesday at 07:00 (Europe/Warsaw)
+    - Automatic updates keep data fresh from FBref.com
     """,
-    version="0.7.4",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
