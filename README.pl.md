@@ -6,7 +6,7 @@
 
 ## 🌐 Aplikacja Live
 
-**Wypróbuj teraz:** [https://polish-football-data-international-tracker.streamlit.app/](https://polish-football-data-international-tracker.streamlit.app/)
+**Wypróbuj teraz:** (https://polish-football-data-international-tracker.streamlit.app/)
 
 ### 📱 Jak korzystać:
 

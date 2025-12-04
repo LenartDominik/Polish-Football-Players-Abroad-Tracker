@@ -537,31 +537,41 @@ python tools/check_reqs.py
 
 ---
 
-## 📚 Documentation szczegółowa
+## 📚 Documentation
 
-### 📖 Documentation projektu
-- 📘 [Backend API - Documentation](app/backend/README.md)
-- 📗 [Frontend - Documentation](app/frontend/README.md)
-- 📄 [Stack technologiczny](STACK.md)
-- 📚 [Documentation Index (ENG)](DOCUMENTATION_INDEX.md) - Pełny indeks dokumentacji
-- 📚 [Documentation Index (PL)](Documentation_INDEX.md) - Pełny indeks dokumentacji
-- 🔐 [Email Setup Guide](EMAIL_SETUP_GUIDE.md) - Configuration Gmail/Outlook/SendGrid
-- 📋 [Classification Rules](CLASSIFICATION_RULES.md) - Reguły klasyfikacji rozgrywek
-- 🏗️ [Architecture Diagram](ARCHITECTURE_DIAGRAM.md) - Diagram architektury systemu
-- 🚀 [Render Deployment Guide](RENDER_DEPLOYMENT.md) - **Darmowy hosting 24/7!**
-- ☁️ [Streamlit Cloud Deployment](STREAMLIT_CLOUD_DEPLOYMENT.md) - **Free frontend hosting!**
-- 🔐 [Streamlit Secrets Setup](STREAMLIT_SECRETS_SETUP.md) - **Configuration połączenia z backendem**
-- 🏢 [Commercial Deployment Guide](COMMERCIAL_DEPLOYMENT.md) - **PostgreSQL + Streamlit Cloud**
-- 📖 [API Documentation](API_DOCUMENTATION.md) - Kompletna Documentation API (wszystkie endpointy, przykłady)
-- 📖 [API Complete Reference](API_COMPLETE_REFERENCE.md) - Szybka referencja endpointów
-- ⚖️ [Legal Notice](LEGAL_NOTICE.md) - **WAŻNE - Przeczytaj przed użyciem!**
-- 🎓 [Credits](CREDITS.md) - Podziękowania i atrybuty
+### 🎓 Essential Guides
 
-### 🌐 Linki zewnętrzne
-- 🌐 [FBref (źródło danych)](https://fbref.com/)
+**Getting Started:**
+- 📖 **[README.md](README.md)** - You are here! Complete overview and quick start
+- 🚀 **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deploy to production (FREE hosting!)
+- 🔧 **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions for common issues
+
+**Reference:**
+- 📚 **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference
+- 🛠️ **[STACK.md](STACK.md)** - Technology stack overview  
+- 🤝 **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
+
+**Legal:**
+- ⚖️ **[LEGAL_NOTICE.md](LEGAL_NOTICE.md)** - Data attribution (**Important!**)
+- 📜 **[CREDITS.md](CREDITS.md)** - Technologies and data sources
+- 📄 **[LICENSE](LICENSE)** - MIT License
+
+**Polish Versions:**  
+All documentation is available in Polish with `.pl.md` extension (e.g., `README.pl.md`)
+
+### 🔗 Quick Links
+
+**Live Application:**
+- 🌐 **[Try it now!](https://polish-football-data-international-tracker.streamlit.app/)** - Live demo
+
+**API Documentation (Local):**
+- 📊 **[Swagger UI](http://localhost:8000/docs)** - Interactive API testing
+- 📖 **[ReDoc](http://localhost:8000/redoc)** - Alternative API docs
+
+**External Resources:**
+- 🌐 [FBref.com](https://fbref.com/) - Data source
 - 📖 [FastAPI Docs](https://fastapi.tiangolo.com/)
 - 🎨 [Streamlit Docs](https://docs.streamlit.io/)
-- 🎭 [Playwright Docs](https://playwright.dev/python/)
 
 ## ☁️ Cloud Deployment (Free 24/7 hosting!)
 
