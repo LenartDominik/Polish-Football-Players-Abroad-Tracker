@@ -1,4 +1,4 @@
-﻿# ☁️ Streamlit Cloud Deployment - Guide Krok Po Kroku
+# ☁️ Streamlit Cloud Deployment - Przewodnik Krok Po Kroku
 
 ## 🎯 Przegląd
 
@@ -12,7 +12,7 @@ Ten przewodnik pokazuje jak wdrożyć **Polish Football Data Hub International**
 
 ---
 
-## 📋 Requirements Wstępne
+## 📋 Wymagania Wstępne
 
 ### 1. Konto GitHub
 - Kod musi być na GitHubie (public lub private repo)
@@ -22,7 +22,7 @@ Ten przewodnik pokazuje jak wdrożyć **Polish Football Data Hub International**
 - ✅ [Render.com](https://render.com) - backend + baza
 
 ### 3. Pliki w Projekcie (już masz!):
-- ✅ `streamlit_app_cloud.py` - main application frontend
+- ✅ `streamlit_app_cloud.py` - główna aplikacja frontend
 - ✅ `requirements-streamlit.txt` - zależności
 - ✅ `.streamlit/config.toml` - konfiguracja
 - ✅ `render.yaml` - konfiguracja backend
@@ -99,7 +99,7 @@ Ten przewodnik pokazuje jak wdrożyć **Polish Football Data Hub International**
 
 ### Krok 1.1: Przygotuj Kod
 
-**Make sure you have:**
+**Upewnij się że masz:**
 ```bash
 polish-players-tracker/
 ├── render.yaml                 # ✅ Konfiguracja Render
@@ -130,7 +130,7 @@ git push origin main
 4. **Render automatycznie wykryje `render.yaml`!**
    - Jeśli nie, wybierz: **Use render.yaml**
 
-5. **Click "Create Web Service"**
+5. **Kliknij "Create Web Service"**
 
 ---
 
@@ -185,10 +185,10 @@ https://polish-players-tracker-xxxx.onrender.com
 
 ### Krok 2.1: Sprawdź Pliki
 
-**Make sure you have:**
+**Upewnij się że masz:**
 ```bash
 polish-players-tracker/
-├── streamlit_app_cloud.py              # ✅ main application
+├── streamlit_app_cloud.py              # ✅ Główna aplikacja
 ├── requirements-streamlit.txt          # ✅ Zależności
 ├── .streamlit/
 │   └── config.toml                     # ✅ Konfiguracja
@@ -247,7 +247,7 @@ BACKEND_API_URL = "https://polish-players-backend.onrender.com"
 
 ### Krok 2.4: Deploy! (2-3 min)
 
-1. **Click "Deploy"**
+1. **Kliknij "Deploy"**
 2. Streamlit:
    - Klonuje repo
    - Instaluje zależności z `requirements-streamlit.txt`
@@ -496,7 +496,7 @@ API_KEY = "your-secret-key"
 ## ✅ Checklist Deploymentu
 
 ### Przed Deploymentem:
-- [ ] Code on GitHubie (main branch)
+- [ ] Kod na GitHubie (main branch)
 - [ ] `render.yaml` skonfigurowany
 - [ ] `streamlit_app_cloud.py` działa lokalnie
 - [ ] `requirements-streamlit.txt` kompletny
