@@ -1,23 +1,23 @@
-# 📚 API Documentation - Polish Football Data Hub International
+﻿# 📚 Dokumentacja API - Polish Football Data Hub International
 
 **Base URL:** `http://localhost:8000` (local) or `https://your-backend.onrender.com` (production)  
-**Interactive Docs:** 
+**Interaktywna dokumentacja:** 
 - **Swagger UI:** `/docs` 
 - **ReDoc:** `/redoc`
 
-> ✅ **All endpoints listed below are tested and working**
+> ✅ **Wszystkie endpointy poniżej są przetestowane i działają**
 
 ---
 
-## ⚖️ Legal Notice
+## ⚖️ Informacje prawne
 
-**This API is for educational and non-commercial use only.**
+**To API jest wyłącznie do użytku edukacyjnego i niekomercyjnego.**
 
-- **Data Source:** FBref.com (© Sports Reference LLC)
-- **Usage:** Educational and portfolio purposes only
-- **NOT for commercial use** without proper licensing
+- **Źródło danych:** FBref.com (© Sports Reference LLC)
+- **Użycie:** Wyłącznie do celów edukacyjnych i portfolio
+- **NIE do użytku komercyjnego** bez odpowiedniej licencji
 
-See [LEGAL_NOTICE.md](LEGAL_NOTICE.md) for full details.
+Zobacz [LEGAL_NOTICE.pl.md](LEGAL_NOTICE.pl.md) dla pełnych szczegółów.
 
 ---
 
