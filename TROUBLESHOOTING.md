@@ -2,6 +2,10 @@
 
 **Common issues and solutions for deployment, configuration, and usage.**
 
+## 🎯 About This Project
+
+This automated platform uses **web scraping** (Playwright) to fetch player statistics from **fbref.com**, stores them in **PostgreSQL** (Supabase), serves data via **FastAPI** backend, and displays it through **Streamlit** frontend. The system includes automated synchronization, data validation, and email notifications.
+
 ---
 
 ## 📋 Table of Contents

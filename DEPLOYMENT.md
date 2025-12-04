@@ -2,6 +2,17 @@
 
 **Complete guide for deploying the full stack application to production.**
 
+## 🎯 About This Project
+
+This project demonstrates **web scraping automation** for regularly fetching and processing current player statistics from **fbref.com**. The **FastAPI backend** cyclically updates the PostgreSQL database, while the **Streamlit frontend** provides a user-friendly interface for data exploration. The platform automates data retrieval, validation, and presentation.
+
+**Key Technologies:**
+- 🕸️ **Web Scraping:** Playwright headless browser
+- 🔄 **Automation:** APScheduler for periodic sync
+- 🗄️ **Database:** PostgreSQL (Supabase) with SQLAlchemy ORM
+- 🔗 **API:** FastAPI with auto-generated docs
+- 🎨 **Frontend:** Streamlit with Plotly visualizations
+
 ---
 
 ## 📋 Table of Contents

@@ -4,6 +4,21 @@
 
 > 📊 Monitorowanie i analiza statystyk 90+ polskich piłkarzy grających za granicą w czasie rzeczywistym
 
+## 🎯 Opis Projektu
+
+Projekt demonstruje wykorzystanie **web scrapingu** do regularnego pobierania i przetwarzania aktualnych statystyk piłkarzy z witryny **fbref.com**. Część backendowa oparta na **FastAPI** cyklicznie aktualizuje bazę danych, a frontend **Streamlit** pozwala na szybki podgląd danych w przyjaznej formie. Moja platforma jest oparta na mechanizmach automatyzujących pobieranie, walidację i prezentację danych.
+
+**Kluczowe Technologie i Techniki:**
+- 🕸️ **Web Scraping:** Playwright headless browser do ekstrakcji dynamicznej treści
+- 🔄 **Automatyzacja:** APScheduler do okresowej synchronizacji danych (2-3x/tydzień)
+- 🛡️ **Walidacja Danych:** Modele Pydantic dla bezpieczeństwa typów i walidacji schematów
+- 🗄️ **Database ORM:** SQLAlchemy 2.0+ z migracjami Alembic
+- 🔐 **Rate Limiting:** 12-sekundowe opóźnienia między requestami (zgodnie z FBref ToS)
+- 📊 **Przetwarzanie Danych:** pandas do agregacji i transformacji statystyk
+- 🎨 **Interaktywna Wizualizacja:** Streamlit z wykresami Plotly
+- 🔗 **RESTful API:** FastAPI z automatycznie generowaną dokumentacją OpenAPI
+- 📧 **Powiadomienia:** Raporty email SMTP po każdej synchronizacji
+
 ## 🌐 Aplikacja Live
 
 **Wypróbuj teraz:** (https://polish-football-data-international-tracker.streamlit.app/)

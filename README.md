@@ -4,6 +4,21 @@
 
 > 📊 Real-time monitoring and analysis of 90+ Polish footballers playing abroad
 
+## 🎯 Project Overview
+
+This project demonstrates the use of **web scraping** to regularly fetch and process current player statistics from **fbref.com**. The **FastAPI-based backend** cyclically updates the database, while the **Streamlit frontend** enables quick data viewing in a user-friendly format. The platform is built on mechanisms that automate data retrieval, validation, and presentation.
+
+**Key Technologies & Techniques:**
+- 🕸️ **Web Scraping:** Playwright headless browser for dynamic content extraction
+- 🔄 **Automation:** APScheduler for periodic data synchronization (2-3x/week)
+- 🛡️ **Data Validation:** Pydantic models for type safety and schema validation
+- 🗄️ **Database ORM:** SQLAlchemy 2.0+ with Alembic migrations
+- 🔐 **Rate Limiting:** 12-second delays between requests (FBref ToS compliant)
+- 📊 **Data Processing:** pandas for statistics aggregation and transformation
+- 🎨 **Interactive Visualization:** Streamlit with Plotly charts
+- 🔗 **RESTful API:** FastAPI with auto-generated OpenAPI documentation
+- 📧 **Notifications:** SMTP email reports after each synchronization
+
 ## 🌐 Live Application
 
 **Try it now:** [https://polish-football-data-international-tracker.streamlit.app/](https://polish-football-data-international-tracker.streamlit.app/)
