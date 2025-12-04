@@ -34,7 +34,7 @@ st.markdown("<h1 style='text-align: center;'>⚖️ Comparison of Polish footbal
 st.markdown("<h3 style='text-align: center; color: white;'>(league stats)</h3>", unsafe_allow_html=True)
 
 # Fetching the list of players
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=600, show_spinner=False)
 def get_all_players():
     try:
         resp = requests.get(f"{API_URL}/players/")
@@ -45,7 +45,7 @@ def get_all_players():
         return []
 
 # Fetching available stats for selection
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=600, show_spinner=False)
 def get_available_stats(player_type: str = None):
     try:
         params = {}
