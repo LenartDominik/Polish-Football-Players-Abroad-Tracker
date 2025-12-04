@@ -8,7 +8,7 @@ Multi-page app: Check sidebar for additional pages like Compare Players
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-from app.frontend.api_client import get_api_client
+from api_client import get_api_client
 
 def get_season_filters(season_str='2025-2026'):
     """
