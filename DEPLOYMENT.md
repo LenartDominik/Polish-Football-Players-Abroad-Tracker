@@ -80,9 +80,21 @@ Before deploying, you need:
 
 **Important:** Use **Connection pooler** (port 6543) not direct connection (port 5432) for better performance.
 
-### Step 3: Run Database Migrations
+### Step 3: Database Migrations (Automatic!)
 
-Migrations will be run automatically when backend starts for the first time.
+**Good news:** Migrations run automatically! No manual work needed.
+
+**How it works:**
+- Backend uses **Alembic** for database migrations
+- Migrations run automatically when backend starts
+- Creates all tables (players, competition_stats, goalkeeper_stats, player_matches)
+- No manual SQL commands required!
+
+**What happens on first deploy:**
+1. Render starts your backend
+2. Backend runs: `alembic upgrade head`
+3. Alembic creates all database tables
+4. Backend starts serving requests
 
 **Verify tables created:**
 1. Supabase Dashboard → **Table Editor**
@@ -91,7 +103,11 @@ Migrations will be run automatically when backend starts for the first time.
    - `competition_stats`
    - `goalkeeper_stats`
    - `player_matches`
-   - `alembic_version`
+   - `alembic_version` (tracks migration version)
+
+**⚠️ Important:**
+- Never delete files from `alembic/versions/` - these are your database version history
+- Migrations are automatic - you don't need to run any commands manually
 
 ---
 

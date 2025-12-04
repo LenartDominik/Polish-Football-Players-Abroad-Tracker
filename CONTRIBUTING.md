@@ -119,6 +119,59 @@ test: Add unit tests for player sync
 
 ---
 
+## 🗄️ Database Changes
+
+### When to create a migration
+
+If you need to modify database schema (add/remove tables or columns):
+
+1. **Create migration file:**
+   ```bash
+   alembic revision -m "descriptive name"
+   # Example: alembic revision -m "add player rating column"
+   ```
+
+2. **Edit generated migration file:**
+   ```python
+   # alembic/versions/xxxxx_add_player_rating.py
+   
+   def upgrade():
+       # Apply changes
+       op.add_column('players', sa.Column('rating', sa.Float()))
+   
+   def downgrade():
+       # Rollback changes (undo)
+       op.drop_column('players', 'rating')
+   ```
+
+3. **Test migration locally:**
+   ```bash
+   alembic upgrade head    # Apply migration
+   alembic downgrade -1    # Test rollback
+   alembic upgrade head    # Apply again
+   ```
+
+4. **Verify in database:**
+   - Check Supabase Dashboard → Table Editor
+   - Column should appear in table
+
+5. **Commit migration file:**
+   ```bash
+   git add alembic/versions/xxxxx_add_player_rating.py
+   git commit -m "Add player rating column migration"
+   ```
+
+### Migration Best Practices
+
+- ✅ Always provide both `upgrade()` and `downgrade()`
+- ✅ Use descriptive migration names
+- ✅ Test migrations locally before committing
+- ✅ Keep migrations small and focused
+- ❌ Never edit old migration files (create new ones)
+- ❌ Never delete migration files from `alembic/versions/`
+
+---
+
 ## 📚 Code Style
 
 **Python:**

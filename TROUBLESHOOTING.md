@@ -64,21 +64,48 @@ This automated platform uses **web scraping** (Playwright) to fetch player stati
 
 ### ❌ Problem: "Relation 'players' does not exist"
 
-**Cause:** Database migrations not run.
+**Cause:** Database migrations haven't run successfully.
+
+**Understanding the issue:**
+- Backend uses **Alembic** to create database tables
+- Migrations should run automatically on backend startup
+- If tables don't exist, migrations failed or didn't run
 
 **Fix:**
-1. Ensure `alembic.ini` is in repository
-2. Backend runs migrations automatically on startup
-3. Check logs in Render Dashboard for migration errors
-4. Verify in Supabase: Table Editor should show `players`, `competition_stats`, etc.
+
+1. **Check Render logs:**
+   - Render Dashboard → Your service → **Logs**
+   - Look for: `INFO  [alembic.runtime.migration] Running upgrade`
+   - Should see: `Creating table players...` etc.
+
+2. **Look for migration errors:**
+   - Common: `could not connect to database` (check DATABASE_URL)
+   - Common: `permission denied` (check Supabase credentials)
+
+3. **Verify database connection:**
+   - Ensure `DATABASE_URL` is correct in Render environment variables
+   - Test connection: go to `/health` endpoint
+   - Should return: `{"status": "healthy", "database": "connected"}`
+
+4. **Check migration files exist:**
+   - Verify `alembic/versions/` folder has migration files
+   - Should have: `0001_create_players_table.py`, etc.
+
+5. **Verify in Supabase:**
+   - Dashboard → Table Editor
+   - Should see tables: `players`, `competition_stats`, `goalkeeper_stats`, `player_matches`, `alembic_version`
 
 **Manual migration (if needed):**
 ```bash
-# Locally
+# Run locally if backend won't start
 alembic upgrade head
 
-# On Render, migrations run automatically via main.py
+# On Render, migrations run automatically when backend starts
 ```
+
+**Still not working?**
+- Check if `alembic_version` table exists (tracks migration state)
+- If exists but tables missing, migrations may be in inconsistent state
 
 ---
 
