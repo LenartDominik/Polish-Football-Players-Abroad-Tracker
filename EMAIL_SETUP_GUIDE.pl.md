@@ -1,27 +1,27 @@
-﻿# 📧 Email Notifications - Przewodnik Konfiguracji
+# 📧 Email Notifications - Przewodnik Konfiguracji
 
-## Quick Start
+## Szybki Start
 
 Email notifications są **opcjonalne**. Scheduler działa bez nich!
 
-## 📋 Step by Step: Gmail
+## 📋 Krok po kroku: Gmail
 
-### 1. Enable 2-Step Verification
+### 1. Włącz 2-Step Verification
 
 1. Idź do: https://myaccount.google.com/security
 2. Znajdź "2-Step Verification"
-3. Click "Get started" i postępuj według instrukcji
+3. Kliknij "Get started" i postępuj według instrukcji
 
-### 2. Generate App Password
+### 2. Wygeneruj App Password
 
 1. Idź do: https://myaccount.google.com/apppasswords
-2. W "Select app" Select **"Mail"**
-3. W "Select device" Select **"Other (Custom name)"**
+2. W "Select app" wybierz **"Mail"**
+3. W "Select device" wybierz **"Other (Custom name)"**
 4. Wpisz: "Polish Football Data Hub International"
-5. Click **"Generate"**
+5. Kliknij **"Generate"**
 6. **Skopiuj** 16-znakowe hasło (format: `xxxx xxxx xxxx xxxx`)
 
-### 3. Configure .env
+### 3. Skonfiguruj .env
 
 Edytuj plik `.env` (lub utwórz jeśli nie istnieje):
 
@@ -39,7 +39,7 @@ EMAIL_TO=gdzie-wyslac@example.com
 - `SMTP_PASSWORD` - użyj **App Password**, nie zwykłego hasła!
 - `EMAIL_TO` - może być inny adres niż `SMTP_USER`
 
-### 4. Test!
+### 4. Testuj!
 
 ```bash
 cd polish-players-tracker
@@ -82,7 +82,7 @@ EMAIL_TO=recipient@example.com
 **Uwaga:** Yahoo **wymaga** App Password. Wygeneruj tutaj:
 https://login.yahoo.com/account/security
 
-### SendGrid (for production)
+### SendGrid (dla produkcji)
 
 SendGrid to profesjonalny serwis email (darmowy plan: 100 emails/dzień).
 
@@ -101,7 +101,7 @@ EMAIL_TO=recipient@example.com
 
 **Ważne:** `SMTP_USER` musi być dokładnie `apikey` (nie zmieniaj!)
 
-### Mailgun (for production)
+### Mailgun (dla produkcji)
 
 ```env
 SMTP_HOST=smtp.mailgun.org
@@ -116,7 +116,7 @@ EMAIL_TO=recipient@example.com
 
 ## 🧪 Testowanie konfiguracji
 
-### Test 1: Simple Import
+### Test 1: Prosty import
 
 ```bash
 python -c "from app.backend.main import send_sync_notification_email; print('✅ OK')"
@@ -168,7 +168,7 @@ python tmp_rovodev_test_email.py
 **Rozwiązanie dla Gmail:**
 1. Upewnij się, że masz włączoną 2-Step Verification
 2. Użyj **App Password**, nie zwykłego hasła
-3. Skopiuj App Password **without spaces** (ale ze spacjami też powinno działać)
+3. Skopiuj App Password **bez spacji** (ale ze spacjami też powinno działać)
 
 **Rozwiązanie dla innych:**
 1. Sprawdź czy hasło jest poprawne
