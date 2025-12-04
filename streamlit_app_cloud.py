@@ -1,7 +1,9 @@
 """Polish Players Tracker International - Streamlit Dashboard
 A simple dashboard to browse and filter Polish football players data.
 Usage:
-    streamlit run app/frontend/streamlit_app.py
+    streamlit run streamlit_app_cloud.py
+    
+Multi-page app: Check sidebar for additional pages like Compare Players
 """
 import streamlit as st
 import pandas as pd
