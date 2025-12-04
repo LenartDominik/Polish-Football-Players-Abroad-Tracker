@@ -86,8 +86,8 @@ https://login.yahoo.com/account/security
 
 SendGrid to profesjonalny serwis email (darmowy plan: 100 emails/dzień).
 
-1. Zarejestruj się: https://sendgrid.com/
-2. Utwórz API Key: Settings > API Keys > Create API Key
+1. Sign up: https://sendgrid.com/
+2. Create API Key: Settings > API Keys > Create API Key
 3. Konfiguracja:
 
 ```env
@@ -176,7 +176,7 @@ python tmp_rovodev_test_email.py
 
 ### Problem: "Connection refused" / "Timeout"
 
-**Rozwiązanie:**
+**Solution:**
 1. Sprawdź `SMTP_HOST` - czy jest poprawny?
 2. Sprawdź `SMTP_PORT` - zwykle 587 (TLS) lub 465 (SSL)
 3. Sprawdź firewall - czy blokuje port 587?
@@ -196,7 +196,7 @@ python tmp_rovodev_test_email.py
 
 ### Problem: Email wysłany, ale nie doszedł
 
-**Rozwiązanie:**
+**Solution:**
 1. Sprawdź **Spam folder**
 2. Sprawdź logi - czy wysłanie się powiodło?
 3. Sprawdź `EMAIL_TO` - czy adres jest poprawny?
