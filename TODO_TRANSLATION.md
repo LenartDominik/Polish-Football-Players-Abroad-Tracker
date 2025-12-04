@@ -7,31 +7,29 @@
 
 ## ✅ Completed
 
-- [x] README.pl.md - Created (Polish backup)
-- [x] README.md - Partially translated (header + frontend section)
+- [x] README.md - Fully translated to English
+- [x] README.pl.md - Full Polish version with live app section
+- [x] STACK.md - Fully translated to English
+- [x] STACK.pl.md - Full Polish version
+- [x] LEGAL_NOTICE.md - Updated (SQLite→PostgreSQL)
+- [x] LEGAL_NOTICE.pl.md - Polish version
+- [x] CREDITS.md - Maintained in English
+- [x] CREDITS.pl.md - Full Polish translation
 
 ## 🔄 In Progress
 
-- [ ] README.md - Complete remaining sections:
-  - Backend API section
-  - Database section  
-  - CLI Tools section
-  - API Endpoints table
-  - Documentation links
-  - Cloud Deployment sections
+- [ ] EMAIL_SETUP_GUIDE.md - Partial translation (encoding issues to fix)
+- [ ] EMAIL_SETUP_GUIDE.pl.md - Polish backup created
 
-## 📋 Next Priority (Top 10 Files)
+## 📋 Remaining Priority Files (5)
 
-1. [ ] STACK.md → STACK.pl.md + translate STACK.md to English
-2. [ ] LEGAL_NOTICE.md → LEGAL_NOTICE.pl.md + translate to English
-3. [ ] CREDITS.md → CREDITS.pl.md + translate to English
-4. [ ] API_DOCUMENTATION.md → API_DOCUMENTATION.pl.md + translate
-5. [ ] STREAMLIT_CLOUD_DEPLOYMENT.md → .pl.md + translate
-6. [ ] RENDER_DEPLOYMENT.md → .pl.md + translate
-7. [ ] SUPABASE_GUIDE.md → .pl.md + translate
-8. [ ] TROUBLESHOOTING_DATABASE.md → .pl.md + translate
-9. [ ] EMAIL_SETUP_GUIDE.md → .pl.md + translate
-10. [ ] STREAMLIT_SECRETS_SETUP.md → .pl.md + translate
+1. [ ] EMAIL_SETUP_GUIDE.md - Fix encoding + complete translation
+2. [ ] API_DOCUMENTATION.md → API_DOCUMENTATION.pl.md + translate
+3. [ ] STREAMLIT_CLOUD_DEPLOYMENT.md → .pl.md + translate
+4. [ ] RENDER_DEPLOYMENT.md → .pl.md + translate
+5. [ ] SUPABASE_GUIDE.md → .pl.md + translate
+6. [ ] TROUBLESHOOTING_DATABASE.md → .pl.md + translate
+7. [ ] STREAMLIT_SECRETS_SETUP.md → .pl.md + translate (if needed)
 
 ## 📚 Remaining Files (Lower Priority)
 
