@@ -1025,7 +1025,7 @@ app = FastAPI(
     ## 🔗 Links
     
     - **FBref**: [Data Source](https://fbref.com/) (Sports Reference LLC)
-    - **GitHub**: [Project Repository](https://github.com/your-repo)
+    - **GitHub**: [Project Repository](https://github.com/LenartDominik/Polish-Football-Data-Hub-International)
     - **LICENSE**: MIT License + Data Attribution (see repository)
     - **CREDITS**: Full attribution (see `CREDITS.md`)
     - **Render.com**: Free hosting available!
@@ -1056,12 +1056,12 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     contact={
-        "name": "Polish Players Tracker",
-        "url": "https://github.com/your-repo",
+        "name": "Polish-Football-Data-Hub-International",
+        "url": "https://github.com/LenartDominik/Polish-Football-Data-Hub-International",
     },
     license_info={
         "name": "Educational Use Only (Non-Commercial)",
-        "url": "https://github.com/your-repo/blob/main/LEGAL_NOTICE.md",
+        "url": "https://github.com/LenartDominik/Polish-Football-Data-Hub-International/blob/master/LEGAL_NOTICE.md",
     },
 )
 
@@ -1114,7 +1114,7 @@ def root():
             "next_matchlogs_sync": str(scheduler.get_job('sync_matchlogs').next_run_time) if scheduler and scheduler.running else "Scheduler disabled"
         },
         "links": {
-            "github": "https://github.com/your-repo",
+            "github": "https://github.com/LenartDominik/Polish-Football-Data-Hub-International",
             "fbref": "https://fbref.com",
             "legal_notice": "See LEGAL_NOTICE.md - Educational use only",
             "license": "Educational Use Only (Non-Commercial)",
@@ -1125,7 +1125,7 @@ def root():
             "usage": "Educational and portfolio purposes ONLY",
             "commercial_use": "NOT allowed without FBref license",
             "data_attribution": "All statistics © FBref.com (Sports Reference LLC)",
-            "full_terms": "https://github.com/your-repo/blob/main/LEGAL_NOTICE.md"
+            "full_terms": "https://github.com/LenartDominik/Polish-Football-Data-Hub-International/blob/main/LEGAL_NOTICE.md"
         },
     "database":  {
         "type": "PostgreSQL",
