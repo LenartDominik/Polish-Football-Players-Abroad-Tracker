@@ -39,7 +39,7 @@ Projekt demonstruje wykorzystanie **web scrapingu** do regularnego pobierania i 
 
 ---
 
-> ⚖️ **[Informacje prawne - Ważne!](LEGAL_NOTICE.md)** | 🚀 **[Deployment Guide](STREAMLIT_CLOUD_DEPLOYMENT.pl.md)**
+> ⚖️ **[Informacje prawne - Ważne!](docs/LEGAL_NOTICE.pl.md)** | 🚀 **[Deployment Guide](docs/STREAMLIT_CLOUD_DEPLOYMENT.pl.md)**
 
 ## ⚖️ Informacje prawne
 
@@ -48,7 +48,7 @@ Projekt demonstruje wykorzystanie **web scrapingu** do regularnego pobierania i 
 - **Źródło danych:** FBref.com (© Sports Reference LLC)
 - **Użycie:** Wyłącznie do celów edukacyjnych i portfolio
 - **NIE do użytku komercyjnego** bez odpowiedniej licencji
-- **Zobacz [LEGAL_NOTICE.md](LEGAL_NOTICE.md) dla pełnych szczegółów**
+- **Zobacz [docs/LEGAL_NOTICE.pl.md](docs/LEGAL_NOTICE.pl.md) dla pełnych szczegółów**
 
 ---
 

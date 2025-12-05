@@ -38,7 +38,7 @@ This project demonstrates the use of **web scraping** to regularly fetch and pro
 **📊 Data Updates:** Automatically synchronized 3x per week (Monday, Thursday, Tuesday) from FBref.com
 
 ---  
-> ⚖️ **[Legal Notice - Important!](LEGAL_NOTICE.md)** | 🚀 **[Deployment Guide](STREAMLIT_CLOUD_DEPLOYMENT.pl.md)**
+> ⚖️ **[Legal Notice - Important!](docs/LEGAL_NOTICE.md)** | 🚀 **[Deployment Guide](docs/STREAMLIT_CLOUD_DEPLOYMENT.pl.md)**
 
 ## ⚖️ Legal Notice
 
@@ -47,7 +47,7 @@ This project demonstrates the use of **web scraping** to regularly fetch and pro
 - **Data Source:** FBref.com (© Sports Reference LLC)
 - **Usage:** Educational and portfolio purposes only
 - **NOT for commercial use** without proper licensing
-- **See [LEGAL_NOTICE.md](LEGAL_NOTICE.md) for full details**
+- **See [docs/LEGAL_NOTICE.md](docs/LEGAL_NOTICE.md) for full details**
 
 # 🇵🇱 Polish Football Data Hub International
 
