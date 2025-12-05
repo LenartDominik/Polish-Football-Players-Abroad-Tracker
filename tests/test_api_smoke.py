@@ -12,4 +12,6 @@ def test_health_check():
     """Sprawdź endpoint health check"""
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "timestamp" in data
