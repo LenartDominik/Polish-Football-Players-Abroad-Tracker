@@ -28,10 +28,26 @@ Have an idea? Create an issue with:
 1. **Fork the repository**
 2. **Create feature branch:** `git checkout -b feature/your-feature-name`
 3. **Make your changes**
-4. **Test thoroughly:** Run backend and frontend locally
+4. **Test thoroughly:**
+   - Run backend and frontend locally
+   - Run automated tests: `pytest`
 5. **Commit:** Follow commit message format (see below)
 6. **Push:** `git push origin feature/your-feature-name`
 7. **Create Pull Request** with clear description
+
+---
+
+## 🧪 Running Tests
+
+This project uses `pytest` for automated testing. Before submitting a PR, please ensure all tests pass.
+
+```powershell
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/test_api_smoke.py
+```
 
 ---
 

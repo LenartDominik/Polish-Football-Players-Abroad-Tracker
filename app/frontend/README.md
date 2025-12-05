@@ -9,7 +9,7 @@
 - **Data Source:** FBref.com (© Sports Reference LLC)
 - **Usage:** Portfolio, CV, education
 - **NOT for commercial use** without proper licensing
-- **See:** [LEGAL_NOTICE.md](../../LEGAL_NOTICE.md) in root directory
+- **See:** [LEGAL_NOTICE.md](../../docs/LEGAL_NOTICE.md) in root directory
 
 ---
 
@@ -82,7 +82,7 @@ API_BASE_URL=http://localhost:8000
 BACKEND_API_URL = "https://your-backend.onrender.com"
 ```
 
-📖 **Szczegóły deployment:** [STREAMLIT_CLOUD_DEPLOYMENT.pl.md](../../STREAMLIT_CLOUD_DEPLOYMENT.pl.md)
+📖 **Szczegóły deployment:** [STREAMLIT_CLOUD_DEPLOYMENT.pl.md](../../docs/STREAMLIT_CLOUD_DEPLOYMENT.pl.md)
 
 ## 🚀 Szybki start
 
@@ -96,7 +96,7 @@ Z głównego katalogu projektu:
 Lub ręcznie:
 ```powershell
 # Aktywuj środowisko wirtualne
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 
 # Przejdź do katalogu frontend
 cd app\frontend

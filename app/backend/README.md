@@ -34,8 +34,8 @@ Z głównego katalogu projektu:
 
 Lub ręcznie:
 ```powershell
-# Aktywuj środowisko wirtualne
-.\venv\Scripts\Activate.ps1
+# Aktywuj środowisko wirtualne (z głównego katalogu)
+..\..\.venv\Scripts\Activate.ps1
 
 # Uruchom serwer FastAPI
 python -m uvicorn app.backend.main:app --reload --port 8000

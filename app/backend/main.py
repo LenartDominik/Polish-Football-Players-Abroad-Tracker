@@ -981,7 +981,7 @@ app = FastAPI(
     
     - **Usage:** Educational and portfolio purposes ONLY
     - **NOT for commercial use** without proper licensing from FBref
-    - **Full Legal Notice:** See `LEGAL_NOTICE.md` in repository
+    - **Full Legal Notice:** See `docs/LEGAL_NOTICE.md` in repository
     
     **Disclaimer:** This project is independent and not affiliated with FBref.com or Sports Reference LLC.  
     For official statistics, visit [FBref.com](https://fbref.com/)

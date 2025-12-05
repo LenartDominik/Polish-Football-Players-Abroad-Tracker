@@ -173,7 +173,7 @@ Backend on Render automatically syncs all players:
 
 ```powershell
 # Activate virtual environment
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 
 # Install pakiety
 pip install -r requirements.txt

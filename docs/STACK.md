@@ -101,6 +101,26 @@ This platform showcases automated data pipeline: **web scraping** (Playwright) �
 
 ---
 
+## 🧪 Testing & CI/CD
+
+### Testing Framework
+- **Pytest 8.0+** - Framework do testowania
+  - Fixtures support
+  - Parametrized testing
+  - Asyncio support (`pytest-asyncio`)
+  - Detailed failure reports
+
+### CI/CD Pipeline
+- **GitHub Actions** - Automatyzacja workflow
+  - **CI Workflow:** Uruchamia testy przy każdym pushu do `main` i Pull Requestach
+  - **Steps:**
+    - Checkout code
+    - Set up Python 3.11
+    - Install dependencies
+    - Run tests (`pytest`)
+
+---
+
 ## 🗄️ Struktura danych
 
 ### Tabele bazy danych

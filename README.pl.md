@@ -174,7 +174,7 @@ Backend na Render automatycznie synchronizuje wszystkich graczy:
 
 ```powershell
 # Aktywuj środowisko wirtualne
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 
 # Zainstaluj pakiety
 pip install -r requirements.txt
