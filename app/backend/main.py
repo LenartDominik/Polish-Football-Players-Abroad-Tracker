@@ -202,6 +202,10 @@ async def sync_single_player(scraper: FBrefPlaywrightScraper, db, player: Player
         # Update player info
         if player_data.get('name'):
             logger.info(f"  ✅ Found: {player_data['name']}")
+            
+        if player_data.get('team'):
+            player.team = player_data['team']
+            logger.info(f"  👕 Updated team: {player.team}")
         
         # Save FBref ID if found (use api_id field)
         if player_data.get('player_id'):

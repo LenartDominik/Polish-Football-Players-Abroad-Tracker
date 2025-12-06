@@ -246,6 +246,19 @@ class FBrefPlaywrightScraper:
         if name_elem:
             player_data['name'] = name_elem.get_text(strip=True)
         
+        # Get current team
+        strong_club = soup.find('strong', string=re.compile('Club|Team'))
+        if strong_club and strong_club.parent:
+            club_link = strong_club.parent.find('a')
+            if club_link:
+                player_data['team'] = club_link.get_text(strip=True)
+            else:
+                # Try to get text after the strong tag
+                text = strong_club.parent.get_text(strip=True)
+                # Remove "Club:" prefix
+                if ':' in text:
+                    player_data['team'] = text.split(':', 1)[1].strip()
+        
         # If we have player_id, fetch from /all_comps/ page for complete data
         if player_id:
             logger.info(f"📊 Fetching complete stats from /all_comps/ page...")

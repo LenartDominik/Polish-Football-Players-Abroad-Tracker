@@ -148,6 +148,14 @@ async def sync_competition_stats(scraper: FBrefPlaywrightScraper, db, player: Pl
     logger.info(f"🏆 Syncing competition stats for {player.name}")
     
     player_data = await scraper.get_player_by_id(player.api_id, player.name)
+    
+    # Update player team if found
+    if player_data and player_data.get('team'):
+        player.team = player_data['team']
+        logger.info(f"  👕 Updated team: {player.team}")
+        db.add(player)
+        db.commit()
+
     if not player_data or not player_data.get('competition_stats'):
         logger.warning("⚠️ No competition stats found")
         return 0
