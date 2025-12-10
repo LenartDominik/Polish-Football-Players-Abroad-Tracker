@@ -996,6 +996,28 @@ def health_check():
         "scheduler_running": scheduler.running if scheduler else False
     }
 
+# --- TYMCZASOWY TEST WYSLYKI MAILA ---
+@app.get("/test-email")
+async def test_email_sending():
+    """
+    Uruchamia wysyłkę próbnego maila przez Resend.
+    """
+    try:
+        # Wywołujemy Twoją funkcję z przykładowymi danymi
+        send_matchlogs_notification_email(
+            synced=5, 
+            failed=1, 
+            total=6, 
+            total_matches=12, 
+            duration_minutes=0.5, 
+            failed_players=["Testowy Gracz (Error)"]
+        )
+        return {"status": "success", "message": "Mail wysłany! Sprawdź skrzynkę odbiorczą."}
+    except Exception as e:
+        return {"status": "error", "message": f"Błąd: {str(e)}"}
+
+
+
 
 
 
