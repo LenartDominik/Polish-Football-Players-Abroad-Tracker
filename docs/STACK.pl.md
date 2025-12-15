@@ -222,10 +222,6 @@ Rekomendowane podejście:
 ```env
 DATABASE_URL=postgresql://postgres.xxxxx:[PASSWORD]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
 ENABLE_SCHEDULER=false
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=email@gmail.com
-SMTP_PASSWORD=app-password
 EMAIL_FROM=email@gmail.com
 EMAIL_TO=recipient@email.com
 ```
