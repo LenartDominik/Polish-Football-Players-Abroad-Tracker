@@ -635,37 +635,70 @@ async def scheduled_sync_all_players():
     logger.info(f"⏰ Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 60)
     
-    db = SessionLocal()
-    
-    try:
-        # Get all players from database
-        players = db.query(Player).all()
-        
-        if not players:
-            logger.warning("⚠️ No players found in database")
+    # 1. Pobieramy listę graczy (tylko dane, bez sesji ORM)
+    players_data = []
+    with SessionLocal() as db:
+        try:
+            all_players = db.query(Player).all()
+            # Kopiujemy dane do słowników, żeby nie trzymać obiektów sesji
+            for p in all_players:
+                players_data.append({
+                    "id": p.id,
+                    "name": p.name,
+                    # Dodaj inne pola, jeśli sync_single_player ich potrzebuje przed pobraniem z bazy
+                    # ale zazwyczaj ID wystarczy, bo zaraz pobierzemy go znów.
+                })
+        except Exception as e:
+            logger.error(f"❌ Failed to fetch players list: {e}")
             return
+
+    if not players_data:
+        logger.warning("⚠️ No players found in database")
+        return
         
-        logger.info(f"📋 Found {len(players)} players to sync")
-        logger.info(f"⏱️ Estimated time: ~{len(players) * 12 / 60:.1f} minutes (12s rate limit)")
-        
-        # Initialize Playwright scraper with rate limiting
+    logger.info(f"📋 Found {len(players_data)} players to sync")
+    logger.info(f"⏱️ Estimated time: ~{len(players_data) * 12 / 60:.1f} minutes (12s rate limit)")
+    
+    synced = 0
+    failed = 0
+    failed_players = []
+    
+    # 2. Uruchamiamy scrapera (TU NIE MA OTWARTEJ SESJI DB!)
+    try:
         async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
-            synced = 0
-            failed = 0
-            failed_players = []
             
-            for idx, player in enumerate(players, 1):
-                logger.info(f"\n[{idx}/{len(players)}] 🔄 Syncing: {player.name}")
+            for idx, p_data in enumerate(players_data, 1):
+                logger.info(f"\n[{idx}/{len(players_data)}] 🔄 Syncing: {p_data['name']}")
                 
-                success = await sync_single_player(scraper, db, player)
-                
+                success = False
+                try:
+                    # 3. Otwieramy NOWĄ sesję tylko dla tego jednego gracza
+                    with SessionLocal() as db_session:
+                        # Pobieramy gracza ponownie w tej sesji (attached to session)
+                        player_orm = db_session.query(Player).filter(Player.id == p_data['id']).first()
+                        
+                        if player_orm:
+                            # Przekazujemy scraper, sesję i obiekt gracza
+                            success = await sync_single_player(scraper, db_session, player_orm)
+                            
+                            # Jeśli sync_single_player nie robi commita, zrób go tu:
+                            # db_session.commit()
+                        else:
+                            logger.warning(f"Player {p_data['name']} not found in DB during sync loop")
+                    
+                    # Sesja zamyka się automatycznie (koniec bloku with)
+
+                except Exception as e:
+                    logger.error(f"❌ Exception during sync for {p_data['name']}: {e}")
+                    success = False
+
                 if success:
                     synced += 1
-                    logger.info(f"✅ Successfully synced {player.name}")
+                    logger.info(f"✅ Successfully synced {p_data['name']}")
                 else:
                     failed += 1
-                    failed_players.append(player.name)
-                    logger.warning(f"❌ Failed to sync {player.name}")
+                    failed_players.append(p_data['name'])
+                    logger.warning(f"❌ Failed to sync {p_data['name']}")
         
         # Calculate duration
         end_time = datetime.now()
@@ -673,12 +706,12 @@ async def scheduled_sync_all_players():
         
         logger.info("=" * 60)
         logger.info("✅ SCHEDULED SYNC COMPLETE")
-        logger.info(f"📊 Results: {synced} synced, {failed} failed out of {len(players)} total")
+        logger.info(f"📊 Results: {synced} synced, {failed} failed out of {len(players_data)} total")
         logger.info(f"⏱️ Duration: {duration:.1f} minutes")
         logger.info("=" * 60)
         
         # Send email notification
-        send_sync_notification_email(synced, failed, len(players), duration, failed_players)
+        send_sync_notification_email(synced, failed, len(players_data), duration, failed_players)
         
     except Exception as e:
         logger.error(f"❌ Scheduled sync failed: {e}", exc_info=True)
@@ -689,15 +722,13 @@ async def scheduled_sync_all_players():
             send_sync_notification_email(0, 1, 1, duration, ["CRITICAL ERROR - Check logs"])
         except:
             pass
-    finally:
-        db.close()
 
 
 async def scheduled_sync_matchlogs():
     """
     Scheduled task to sync match logs for all players.
     Respects 12-second rate limiting between requests.
-    Runs weekly on Tuesdays at 07:00 AM (gives time for stats to be updated).
+    Runs weekly on Tuesdays at 07:00 AM.
     Sends email notification after completion.
     """
     start_time = datetime.now()
@@ -707,72 +738,100 @@ async def scheduled_sync_matchlogs():
     logger.info(f"⏰ Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 60)
     
-    db = SessionLocal()
+    # 1. Pobieramy listę graczy w KRÓTKIEJ sesji i zamykamy ją od razu
+    # Dzięki temu nie trzymamy otwartego połączenia, gdy nie jest potrzebne.
+    players_data = []
     
-    try:
-        # Get all players from database
-        players = db.query(Player).all()
-        
-        if not players:
-            logger.warning("⚠️ No players found in database")
-            return
-        
-        # Filter players with FBref ID
-        players_with_id = [p for p in players if (hasattr(p, 'fbref_id') and p.fbref_id) or p.api_id]
-        
-        logger.info(f"📋 Found {len(players_with_id)} players with FBref ID to sync match logs")
-        logger.info(f"⏱️ Estimated time: ~{len(players_with_id) * 12 / 60:.1f} minutes (12s rate limit)")
-        
-        # Initialize Playwright scraper with rate limiting
-        async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
-            synced = 0
-            failed = 0
-            failed_players = []
-            total_matches = 0
+    with SessionLocal() as db:
+        try:
+            # Pobieramy wszystkich graczy
+            all_players = db.query(Player).all()
             
-            for idx, player in enumerate(players_with_id, 1):
-                logger.info(f"\n[{idx}/{len(players_with_id)}] 📋 Syncing match logs: {player.name}")
+            # Filtrujemy i zapisujemy tylko potrzebne ID i nazwy do listy słowników
+            for p in all_players:
+                if (hasattr(p, 'fbref_id') and p.fbref_id) or p.api_id:
+                    players_data.append({
+                        "id": p.id,
+                        "name": p.name,
+                        # Pobieramy to, co potrzebne, żeby nie używać obiektu ORM poza sesją
+                        "fbref_id": getattr(p, 'fbref_id', None),
+                        "api_id": p.api_id
+                    })
+        except Exception as e:
+            logger.error(f"❌ Failed to fetch players list: {e}")
+            return
+
+    if not players_data:
+        logger.warning("⚠️ No players found in database (or no suitable IDs)")
+        return
+        
+    logger.info(f"📋 Found {len(players_data)} players with FBref ID to sync match logs")
+    logger.info(f"⏱️ Estimated time: ~{len(players_data) * 12 / 60:.1f} minutes (12s rate limit)")
+    
+    synced = 0
+    failed = 0
+    failed_players = []
+    total_matches = 0
+
+    # 2. Uruchamiamy scrapera (TU NIE MA OTWARTEJ SESJI DB!)
+    try:
+        async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
+            
+            for idx, p_data in enumerate(players_data, 1):
+                logger.info(f"\n[{idx}/{len(players_data)}] 📋 Syncing match logs: {p_data['name']}")
                 
                 try:
-                    matches_count = await sync_player_matchlogs(scraper, db, player)
+                    matches_count = 0
                     
+                    # 3. Otwieramy NOWĄ sesję tylko dla tego jednego gracza
+                    with SessionLocal() as db_session:
+                        # Musimy pobrać gracza ponownie w tej nowej sesji, żeby ORM działał
+                        player_orm = db_session.query(Player).filter(Player.id == p_data['id']).first()
+                        
+                        if player_orm:
+                            # Wywołujemy Twoją funkcję, przekazując jej AKTYWNĄ sesję
+                            matches_count = await sync_player_matchlogs(scraper, db_session, player_orm)
+                            
+                            # Jeśli Twoja funkcja sync_player_matchlogs robi db.commit(), to super.
+                            # Jeśli nie, dodaj tu: db_session.commit()
+                        else:
+                            logger.warning(f"Player {p_data['name']} not found in DB during sync loop")
+
+                    # Sesja db_session zamyka się automatycznie tutaj (koniec bloku with)
+
                     if matches_count > 0:
                         synced += 1
                         total_matches += matches_count
-                        logger.info(f"✅ Successfully synced {matches_count} matches for {player.name}")
+                        logger.info(f"✅ Successfully synced {matches_count} matches for {p_data['name']}")
                     else:
-                        logger.info(f"ℹ️ No matches synced for {player.name}")
-                        synced += 1  # Count as success even if no matches
+                        logger.info(f"ℹ️ No matches synced for {p_data['name']}")
+                        synced += 1 # Liczymy jako sukces, bo po prostu nie było meczów
                         
                 except Exception as e:
                     failed += 1
-                    failed_players.append(player.name)
-                    logger.warning(f"❌ Failed to sync match logs for {player.name}: {e}")
-        
-        # Calculate duration
+                    failed_players.append(p_data['name'])
+                    logger.warning(f"❌ Failed to sync match logs for {p_data['name']}: {e}")
+                    # Nie przerywamy pętli, idziemy do następnego gracza
+
+        # Podsumowanie i wysyłka maila
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds() / 60
         
         logger.info("=" * 60)
         logger.info("✅ SCHEDULED MATCHLOGS SYNC COMPLETE")
-        logger.info(f"📊 Results: {synced} players synced, {total_matches} total matches, {failed} failed out of {len(players_with_id)} total")
+        logger.info(f"📊 Results: {synced} players synced, {total_matches} total matches, {failed} failed out of {len(players_data)} total")
         logger.info(f"⏱️ Duration: {duration:.1f} minutes")
         logger.info("=" * 60)
         
-        # Send email notification
-        send_matchlogs_notification_email(synced, failed, len(players_with_id), total_matches, duration, failed_players)
+        send_matchlogs_notification_email(synced, failed, len(players_data), total_matches, duration, failed_players)
         
     except Exception as e:
-        logger.error(f"❌ Scheduled matchlogs sync failed: {e}", exc_info=True)
-        
-        # Try to send error notification email
+        logger.error(f"❌ Scheduled matchlogs sync CRITICAL FAILURE: {e}", exc_info=True)
         try:
             duration = (datetime.now() - start_time).total_seconds() / 60
             send_matchlogs_notification_email(0, 1, 1, 0, duration, ["CRITICAL ERROR - Check logs"])
         except:
             pass
-    finally:
-        db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
