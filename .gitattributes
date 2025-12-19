@@ -1,0 +1,8 @@
+# Wymuś styl LF dla wszystkich plików tekstowych (Python, HTML, CSS, itp.)
+* text=auto eol=lf
+
+# Pliki binarne (grafika, db) nie powinny być ruszane
+*.png binary
+*.jpg binary
+*.sqlite binary
+*.db binary
