@@ -212,7 +212,7 @@ async def sync_single_player(scraper: FBrefPlaywrightScraper, player_info: dict,
         # --- FAZA 2: BAZA DANYCH (Szybki zapis) ---
         db = SessionLocal() # Otwieramy sesję TERAZ
         try:
-            player = db.query(Player).get(player_id)
+            player = db.get(Player, player_id)
             if not player:
                 logger.error(f"Player {player_id} disappeared from DB!")
                 return False
@@ -220,29 +220,43 @@ async def sync_single_player(scraper: FBrefPlaywrightScraper, player_info: dict,
             # Update player info
             if player_data.get('name'):
                 logger.info(f" ✅ Found: {player_data['name']}")
-                
-            if player_data.get('team'):
-                player.team = player_data['team']
-                
-            # Update player league logic (skopiowane z Twojego kodu)
+            
+            # Prefer setting team from the most recent LEAGUE stat with non-empty 'squad'
+            # For players who transferred mid-season, pick the team with MOST GAMES in current season
+            latest_league_team = None
+            latest_league_name = None
             if player_data.get('competition_stats'):
-                sorted_stats = sorted(
-                    player_data['competition_stats'], 
-                    key=lambda x: x.get('season', ''), 
-                    reverse=True
-                )
+                def season_start(s: str) -> int:
+                    if not s:
+                        return -1
+                    s = str(s).strip()
+                    try:
+                        if '-' in s:
+                            first = s.split('-')[0]
+                            return int(first)
+                        return int(s)
+                    except Exception:
+                        return -1
+                # Filter LEAGUE stats and sort by: 1) season start year descending, 2) minutes played descending
+                from app.backend.main import get_competition_type, normalize_competition_type
+                league_stats = [st for st in player_data['competition_stats'] 
+                               if normalize_competition_type(st.get('competition_type'), st.get('competition_name', '')) == 'LEAGUE']
+                league_stats.sort(key=lambda st: (season_start(st.get('season')), st.get('minutes', 0)), reverse=True)
                 
-                current_league = None
-                # ... (Twoja logika szukania ligi - skopiuj ze starej funkcji jeśli chcesz, 
-                # ale dla skrócenia tutaj pominąłem, bo jest długa. 
-                # Najważniejszy jest mechanizm sesji) ...
-                for stat in sorted_stats:
-                    if stat.get('competition_type') == 'LEAGUE':
-                        current_league = stat.get('competition_name')
-                        break # Uproszczone
-                
-                if current_league:
-                    player.league = current_league
+                # Pick the first one with non-empty squad (most recent season, most minutes played)
+                for st in league_stats:
+                    squad = (st.get('squad') or '').strip()
+                    comp_name = (st.get('competition_name') or '').strip()
+                    if squad:
+                        latest_league_team = squad
+                        latest_league_name = comp_name
+                        logger.info(f"🔧 Selected team: {squad} from {comp_name} ({st.get('season')}) - {st.get('games', 0)} games, {st.get('minutes', 0)} minutes")
+                        break
+            # Apply league/team from latest reliable league stat; do not fallback to API top-level team
+            if latest_league_name:
+                player.league = latest_league_name
+            if latest_league_team:
+                player.team = latest_league_team
             
             # Save IDs
             if player_data.get('player_id'):

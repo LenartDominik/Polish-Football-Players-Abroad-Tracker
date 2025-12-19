@@ -75,6 +75,10 @@ def sync_competition_stats_from_matches(player_id: int) -> int:
         })
         
         for match in matches:
+            # Skip matches with 0 minutes (bench/unused sub)
+            if (match.minutes_played or 0) == 0:
+                continue
+
             year = match.match_date.year
             month = match.match_date.month
             
@@ -156,7 +160,6 @@ def sync_competition_stats_from_matches(player_id: int) -> int:
         return 0
         
     finally:
-        # KROK 2: ZAWSZE zamykamy połączenie (kluczowe!)
         db.close()
 
 
@@ -187,7 +190,7 @@ def main():
         
         total_updated = 0
         for player in players:
-            updated = sync_competition_stats_from_matches(db, player.id)
+            updated = sync_competition_stats_from_matches(player.id)
             if updated > 0:
                 total_updated += updated
                 logger.info(f"✅ {player.name}: {updated} records updated")
@@ -204,5 +207,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

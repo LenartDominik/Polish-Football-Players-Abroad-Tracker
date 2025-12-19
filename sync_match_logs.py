@@ -56,7 +56,7 @@ async def sync_player_matches(scraper: FBrefPlaywrightScraper, player_info: dict
                 # Otwieramy bazę tylko na moment zapisu ID
                 db_temp = SessionLocal()
                 try:
-                    p = db_temp.query(Player).get(player_id)
+                    p = db_temp.get(Player, player_id)
                     if p:
                         p.api_id = fbref_id # lub fbref_id field
                         db_temp.commit()
@@ -101,39 +101,55 @@ async def sync_player_matches(scraper: FBrefPlaywrightScraper, player_info: dict
             PlayerMatch.match_date <= season_end
         ).delete(synchronize_session=False) # 'fetch' jest wolniejsze, False wystarczy przy nowej sesji
         
+        # Preload existing matches for this player to avoid UNIQUE constraint violations
+        existing_keys = set()
+        for m in db.query(PlayerMatch).filter(PlayerMatch.player_id == player_id).all():
+            comp = (m.competition or '').strip()[:100]
+            opp = (m.opponent or '').strip()[:100]
+            existing_keys.add((m.match_date, comp, opp))
+
         saved_count = 0
+        seen = set()             # wide key (date, competition, opponent)
+        seen_narrow = set()      # narrow key (date, opponent) for unique_match_event
         for match_data in match_logs:
             try:
-                # Logika parsowania daty (skopiowana z Twojego kodu)
+                # Parse and normalize
                 match_date_str = match_data.get('match_date')
-                match_date = date.today() # fallback
-                
+                match_date = date.today()  # fallback
                 if match_date_str:
                     try:
                         match_date = datetime.strptime(match_date_str, '%Y-%m-%d').date()
-                    except:
-                         try:
+                    except Exception:
+                        try:
                             parts = match_date_str.split('-')
                             if len(parts) == 3:
                                 match_date = date(int(parts[0]), int(parts[1]), int(parts[2]))
-                         except:
-                            pass # zostaje today
+                        except Exception:
+                            pass  # keep fallback
+                competition = (match_data.get('competition') or '').strip()[:100]
+                opponent = (match_data.get('opponent') or '').strip()[:100]
+
+                # Skip if already in DB or duplicated within this batch
+                key = (match_date, competition, opponent)
+                if key in existing_keys or key in seen:
+                    continue
+                seen.add(key)
 
                 # Create match record
                 match = PlayerMatch(
                     player_id=player_id,
                     match_date=match_date,
-                    competition=match_data.get('competition', '')[:50], # Zabezpieczenie długości stringa
-                    round=match_data.get('round', '')[:50],
-                    venue=match_data.get('venue', '')[:50],
-                    opponent=match_data.get('opponent', '')[:50],
-                    result=match_data.get('result', '')[:20],
+                    competition=competition,
+                    round=(match_data.get('round') or '').strip()[:50],
+                    venue=(match_data.get('venue') or '').strip()[:50],
+                    opponent=opponent,
+                    result=(match_data.get('result') or '').strip()[:20],
                     minutes_played=match_data.get('minutes_played', 0) or 0,
                     goals=match_data.get('goals', 0) or 0,
                     assists=match_data.get('assists', 0) or 0,
                     shots=match_data.get('shots', 0) or 0,
                     shots_on_target=match_data.get('shots_on_target', 0) or 0,
-                    xg=float(match_data.get('xg', 0.0) or 0.0), # rzutowanie na float
+                    xg=float(match_data.get('xg', 0.0) or 0.0),  # cast to float
                     xa=float(match_data.get('xa', 0.0) or 0.0),
                     passes_completed=match_data.get('passes_completed', 0) or 0,
                     passes_attempted=match_data.get('passes_attempted', 0) or 0,
@@ -204,7 +220,7 @@ async def main():
                 'fbref_id': getattr(player, 'fbref_id', None),
                 'api_id': getattr(player, 'api_id', None)
             }
-            matches_count = await sync_player_matches(scraper, db, player_data, season)
+            matches_count = await sync_player_matches(scraper, player_data, season)
         logger.info("=" * 60)
         if matches_count > 0:
             logger.info(f"✅ SUCCESS: Synced {matches_count} matches")
