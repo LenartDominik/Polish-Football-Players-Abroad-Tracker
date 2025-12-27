@@ -42,14 +42,13 @@ def sync_competition_stats_from_matches(player_id: int) -> int:
         
         # --- KONFIGURACJA: Ligi grające systemem wiosna-jesień (rok kalendarzowy) ---
         calendar_year_leagues = [
-            # Skandynawia
-            'Veikkausliiga', 'Allsvenskan', 'Eliteserien',
-            # USA / Kanada (Ważne: Puchary też muszą tu być!)
-            'MLS', 'Major League Soccer', 
-            'Leagues Cup', 'US Open Cup', 'Lamar Hunt U.S. Open Cup', 'Canadian Championship',
-            # Azja
-            'J1 League', 'J2 League', 'K League 1', 'Chinese Super League', 'A-League'
-        ]
+    'Veikkausliiga', 'Allsvenskan', 'Eliteserien',
+    'MLS', 'Major League Soccer', 
+    'Leagues Cup', 'US Open Cup', 'Lamar Hunt U.S. Open Cup', 'Canadian Championship',
+    'CONCACAF Champions Cup', 'CONCACAF Champions League', # <--- DODAJ TO
+    'J1 League', 'J2 League', 'K League 1', 'Chinese Super League', 'A-League'
+]
+
 
         international_comps = [
             'WCQ', 'World Cup', 'UEFA Nations League', 
@@ -69,10 +68,14 @@ def sync_competition_stats_from_matches(player_id: int) -> int:
             # Ujednolicamy nazwę zanim zaczniemy ustalać sezon
             raw_comp = (match.competition or '').strip()
             
-            if raw_comp == 'Major League Soccer':
-                comp_name = 'MLS'
+            if 'Major League Soccer' in raw_comp or 'MLS' in raw_comp:
+                comp_name = 'MLS' # Wszystko co ma "MLS" w nazwie (Playoffs też) spłaszczamy do 'MLS'
             elif 'U.S. Open Cup' in raw_comp:
                 comp_name = 'US Open Cup'
+            elif 'Leagues Cup' in raw_comp:
+                comp_name = 'Leagues Cup'
+            elif 'CONCACAF' in raw_comp:
+                comp_name = 'CONCACAF Champions Cup'
             else:
                 comp_name = raw_comp
 
