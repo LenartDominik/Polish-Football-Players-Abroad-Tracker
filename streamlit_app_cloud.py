@@ -958,7 +958,10 @@ if not filtered_df.empty:
                             })
                         if rows:
                             comp_display_df = _pd.DataFrame(rows)
-                            gk_display = _pd.concat([gk_display, comp_display_df], ignore_index=True)
+                            if gk_display.empty:
+                                gk_display = comp_display_df
+                            else:
+                                gk_display = _pd.concat([gk_display, comp_display_df], ignore_index=True)
                             
                     season_display = gk_display
                 else:
