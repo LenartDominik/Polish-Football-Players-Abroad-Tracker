@@ -1153,7 +1153,7 @@ if not filtered_df.empty:
                                 'minutes': safe_int(r.get('minutes')),
                                 'clean_sheets': 0,
                                 'goals_against': 0,
-                                'save_percentage': _pd.NA,
+                                'save_percentage': None,
                             })
                         comp_display_df = _pd.DataFrame(rows) if rows else _pd.DataFrame(columns=gk_cols)
                         if not comp_display_df.empty:
