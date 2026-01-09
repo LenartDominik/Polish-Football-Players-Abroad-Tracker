@@ -454,6 +454,23 @@ st.set_page_config(
     }
 )
 
+# Google Analytics 4 (Recommended for GSC Verification on Streamlit)
+GA_ID = "G-KHLFC3Z5DG"  # Np. G-XXXXXXXXXX
+if GA_ID and GA_ID.startswith("G-"):
+    import streamlit.components.v1 as components
+    components.html(
+        f"""
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-KHLFC3Z5DG"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){{dataLayer.push(arguments);}}
+            gtag('js', new Date());
+            gtag('config', 'G-KHLFC3Z5DG');
+        </script>
+        """,
+        height=0
+    )
+
 # SEO Meta Tags Injection (Invisible in UI but visible to bots)
 # Moving to the top of the app flow
 st.markdown(
