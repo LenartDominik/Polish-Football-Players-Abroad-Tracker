@@ -9,6 +9,7 @@ Multi-page app: Check sidebar for additional pages like Compare Players
 import streamlit as st
 import pandas as pd
 from pathlib import Path
+from api_client import get_api_client
 import math
 import os
 import streamlit.components.v1 as components
