@@ -8,6 +8,7 @@ import pandas as pd
 from pathlib import Path
 import sys
 import os
+import streamlit.components.v1 as components
 
 current = os.path.dirname(os.path.abspath(__file__))
 parent = os.path.dirname(os.path.dirname(current))
@@ -491,26 +492,29 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     menu_items={
         'Get Help': 'https://github.com/LenartDominik/Polish-Football-Players-Abroad',
-        'About': "# Polish Football Players Abroad\nTrack and compare statistics of Polish football players playing in leagues worldwide."
+        'About': "# Polish Football Players Abroad\nTrack and compare statistics of Polish football players playing abroad."
     }
 )
 
-# Google Analytics 4 (Recommended for GSC Verification on Streamlit)
-GA_ID = "G-KHLFC3Z5DG"  # Np. G-XXXXXXXXXX
+
+# Google Analytics 4 z .env (bezpieczne)
+GA_ID = os.getenv("GA_ID")  
 if GA_ID and GA_ID.startswith("G-"):
-    import streamlit.components.v1 as components
-    components.html(
-        f"""
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-KHLFC3Z5DG"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){{dataLayer.push(arguments);}}
-            gtag('js', new Date());
-            gtag('config', 'G-KHLFC3Z5DG');
-        </script>
-        """,
-        height=0
-    )
+    try:
+        components.html(
+            f"""
+            <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){{dataLayer.push(arguments);}}
+                gtag('js', new Date());
+                gtag('config', '{GA_ID}');
+            </script>
+            """,
+            height=0
+        )
+    except Exception:
+        st.warning("GA nie załadowany – sprawdź GA_ID")
 
 # SEO Meta Tags Injection
 st.markdown(
