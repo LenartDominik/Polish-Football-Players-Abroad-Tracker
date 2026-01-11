@@ -1655,8 +1655,8 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-GA_ID = os.getenv("GA_ID")
-if GA_ID and GA_ID.startswith("G-"):
+GA_ID = os.getenv("GA_ID", "").strip('"\'') 
+if GA_ID.startswith("G-"):
     try:
         components.html(
             f"""
@@ -1670,5 +1670,6 @@ if GA_ID and GA_ID.startswith("G-"):
             """,
             height=0
         )
-    except Exception:
-        st.warning("GA4 nie załadowany - sprawdź GA_ID")
+        st.success(f"GA4 OK: {GA_ID}")  # potwierdzenie
+    except Exception as e:
+        st.error(f"GA4 błąd: {e}")
