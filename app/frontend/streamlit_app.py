@@ -497,24 +497,7 @@ st.set_page_config(
 )
 
 
-# Google Analytics 4 z .env (bezpieczne)
-GA_ID = os.getenv("GA_ID")  
-if GA_ID and GA_ID.startswith("G-"):
-    try:
-        components.html(
-            f"""
-            <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
-            <script>
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){{dataLayer.push(arguments);}}
-                gtag('js', new Date());
-                gtag('config', '{GA_ID}');
-            </script>
-            """,
-            height=0
-        )
-    except Exception:
-        st.warning("GA nie załadowany – sprawdź GA_ID")
+
 
 # SEO Meta Tags Injection
 st.markdown(
@@ -2250,6 +2233,26 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+
+# Google Analytics 4 z .env (bezpieczne)
+GA_ID = os.getenv("GA_ID")  
+if GA_ID and GA_ID.startswith("G-"):
+    try:
+        components.html(
+            f"""
+            <script async src="https://www.google-analytics.com/gtag/js?id={GA_ID}"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){{dataLayer.push(arguments);}}
+                gtag('js', new Date());
+                gtag('config', '{GA_ID}');
+            </script>
+            """,
+            height=0
+        )
+    except Exception:
+        st.warning("GA nie załadowany – sprawdź GA_ID")
 
 
 

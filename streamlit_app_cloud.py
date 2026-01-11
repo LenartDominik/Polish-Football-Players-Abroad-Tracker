@@ -455,24 +455,7 @@ st.set_page_config(
     }
 )
 
-# Google Analytics 4
-GA_ID = os.getenv("GA_ID")
-if GA_ID and GA_ID.startswith("G-"):
-    try:
-        components.html(
-            f"""
-            <script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
-            <script>
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){{dataLayer.push(arguments);}}
-                gtag('js', new Date());
-                gtag('config', '{GA_ID}');
-            </script>
-            """,
-            height=0
-        )
-    except Exception:
-        st.warning("GA4 nie załadowany - sprawdź GA_ID")
+
 
 # SEO Meta Tags Injection (Invisible in UI but visible to bots)
 # Moving to the top of the app flow
@@ -1671,3 +1654,21 @@ st.markdown("""
     <p>📊 <strong>Data Source:</strong> <a href='https://fbref.com/' target='_blank'>FBref.com</a></p>
 </div>
 """, unsafe_allow_html=True)
+
+GA_ID = os.getenv("GA_ID")
+if GA_ID and GA_ID.startswith("G-"):
+    try:
+        components.html(
+            f"""
+            <script async src="https://www.google-analytics.com/gtag/js?id={GA_ID}"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){{dataLayer.push(arguments);}}
+                gtag('js', new Date());
+                gtag('config', '{GA_ID}');
+            </script>
+            """,
+            height=0
+        )
+    except Exception:
+        st.warning("GA4 nie załadowany - sprawdź GA_ID")
