@@ -1670,6 +1670,6 @@ if GA_ID.startswith("G-"):
             """,
             height=0
         )
-        st.success(f"GA4 OK: {GA_ID}")  # potwierdzenie
+        # st.success(f"GA4 OK: {GA_ID}")  # potwierdzenie
     except Exception as e:
         st.error(f"GA4 błąd: {e}")
