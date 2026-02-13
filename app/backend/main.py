@@ -604,6 +604,85 @@ def health_check():
     }
 
 
+@app.post("/api/search-update-player/{player_id}", tags=["Sync"])
+async def search_and_update_player(player_id: int, search_name: str = Query(None, description="Custom search name (optional, defaults to player.name)")):
+    """
+    Wyszukaj gracza na RapidAPI i zaktualizuj jego ID
+
+    Uycie: POST /api/search-update-player/123?search_name=Lewandowski
+    """
+    from .database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        player = db.get(Player, player_id)
+        if not player:
+            raise HTTPException(status_code=404, detail="Player not found")
+
+        # Use provided search name or player's name
+        name_to_search = search_name or player.name
+
+        # Search on RapidAPI
+        async with RapidAPIClient() as client:
+            results = await client.search_players(name_to_search)
+
+            if not results:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No players found on RapidAPI for: {name_to_search}"
+                )
+
+            # Try to find exact match
+            exact_match = None
+            for result in results:
+                result_name = result.get("player", {}).get("name", "")
+                if result_name.lower() == name_to_search.lower():
+                    exact_match = result
+                    break
+
+            # If no exact match, return first result
+            chosen = exact_match or results[0]
+
+            # Extract IDs from result
+            player_info = chosen.get("player", {})
+            team_info = chosen.get("statistics", [{}])[0].get("team", {}) if chosen.get("statistics") else {}
+
+            rapidapi_player_id = player_info.get("id")
+            rapidapi_team_id = team_info.get("id")
+            team_name = team_info.get("name")
+
+            if not rapidapi_player_id:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Could not extract player ID from RapidAPI response"
+                )
+
+            # Update database
+            player.rapidapi_player_id = rapidapi_player_id
+            if rapidapi_team_id:
+                player.rapidapi_team_id = rapidapi_team_id
+            if team_name:
+                player.team = team_name
+
+            db.commit()
+
+            return {
+                "status": "success",
+                "message": f"Updated RapidAPI IDs for {player.name}",
+                "player": {
+                    "id": player.id,
+                    "name": player.name,
+                    "rapidapi_player_id": rapidapi_player_id,
+                    "rapidapi_team_id": rapidapi_team_id,
+                    "team": team_name
+                },
+                "search_results_count": len(results),
+                "timestamp": datetime.now().isoformat()
+            }
+    finally:
+        db.close()
+
+
 @app.post("/api/sync-player/{player_id}", tags=["Sync"])
 async def sync_single_player_endpoint(player_id: int):
     """
