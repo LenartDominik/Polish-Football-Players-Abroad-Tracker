@@ -315,6 +315,14 @@ class RapidAPIClient:
         """Clean up resources"""
         logger.info(f"RapidAPI client closed. Total requests: {self.request_count}")
 
+    async def __aenter__(self):
+        """Async context manager support"""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager cleanup"""
+        await self.close()
+
 
 # Common league IDs for Polish players abroad
 LEAGUE_IDS = {
