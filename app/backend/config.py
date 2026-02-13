@@ -2,8 +2,12 @@ from __future__ import annotations
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv(override=False)
+# Load environment variables - szukaj .env w głównym katalogu projektu
+import sys
+from pathlib import Path
+project_root = Path(__file__).resolve().parent.parent.parent  # polish-players-tracker/
+env_path = project_root / ".env"
+load_dotenv(env_path, override=False)
 
 class Settings:
     def __init__(self) -> None:
@@ -24,6 +28,9 @@ class Settings:
 
         # Timezone dla schedulera (domyślnie Europe/Warsaw)
         self.scheduler_timezone: str = os.getenv("SCHEDULER_TIMEZONE", "Europe/Warsaw")
+
+        # --- RapidAPI Configuration (nowe źródło danych) ---
+        self.rapidapi_key: str = os.getenv("RAPIDAPI_KEY")
 
         # --- Konfiguracja Email (Resend API) ---
         # Używamy API zamiast SMTP ze względu na blokadę portów na Render

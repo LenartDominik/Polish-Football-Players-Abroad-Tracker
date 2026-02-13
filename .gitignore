@@ -11,6 +11,7 @@ env/
 # Environment
 .env
 .env.local
+.env.*
 
 # Database
 *.db
@@ -20,7 +21,11 @@ pilkarze.db*
 sqlite_export.sql
 
 # IDE
-.vscode/
+.vscode/settings.json
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json  # jeśli chcesz udostępnić launch
+!.vscode/tasks.json
 .idea/
 *.swp
 *.swo
@@ -38,3 +43,18 @@ tmp_*
 *.tmp
 *.bak
 *.backup_*
+
+# Wrażliwe pliki (dodane dla bezpieczeństwa)
+**/*.key
+**/*.pem
+**/*.p12
+**/*.crt
+**/*.cer
+**/*.token
+**/*.secret
+**/*.auth
+**/.ssh/
+**/.aws/
+**/secrets/
+**/credentials/
+

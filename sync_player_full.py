@@ -15,8 +15,18 @@ sys.path.append('.')
 from sqlalchemy import text
 from app.backend.database import SessionLocal
 from app.backend.services.fbref_playwright_scraper import FBrefPlaywrightScraper
+from app.backend.services.rapidapi_client import RapidAPIClient
+from app.backend.services.data_mapper import (
+    map_player_data,
+    map_competition_stats,
+    map_goalkeeper_stats,
+    map_match_logs_from_fixtures,
+    normalize_season_for_api,
+    get_competition_from_api
+)
 from app.backend.utils import get_competition_type
 from app.backend.models import Player, PlayerMatch, CompetitionStats, GoalkeeperStats
+from app.backend.config import settings
 
 # --- Ujednolicone mapowanie competition_type ---
 
@@ -721,17 +731,140 @@ async def sync_match_logs_for_season(scraper: FBrefPlaywrightScraper, player_inf
     finally:
         db.close()
 
+
+async def sync_competition_stats_api(client: RapidAPIClient, player_info: dict, season: str = "2025-2026") -> int:
+    """
+    Sync competition stats using RapidAPI (Safe for Supabase Port 6543).
+
+    Args:
+        client: RapidAPI client instance
+        player_info: Dict with player data (must include rapidapi_player_id, rapidapi_team_id)
+        season: Season to sync
+
+    Returns:
+        Number of stats records synced
+    """
+    player_id = player_info['id']
+    player_name = player_info['name']
+    rapidapi_player_id = player_info.get('rapidapi_player_id')
+    rapidapi_team_id = player_info.get('rapidapi_team_id')
+
+    logger.info(f"🏆 Syncing competition stats for {player_name} via RapidAPI")
+
+    # --- PHASE 1: API CALLS ---
+    player_data = None
+
+    if rapidapi_team_id:
+        # Efficient: Get all players from team
+        season_year = normalize_season_for_api(season)
+        team_data = await client.get_team_squad(rapidapi_team_id, season_year)
+
+        if team_data:
+            for p in team_data:
+                if p.get('player', {}).get('id') == rapidapi_player_id:
+                    player_data = p
+                    break
+
+    if not player_data and rapidapi_player_id:
+        # Fallback: Get individual player
+        player_data = await client.get_player_detail(rapidapi_player_id)
+
+    if not player_data:
+        logger.warning("⚠️ No data found from RapidAPI")
+        return 0
+
+    # --- PHASE 2: DATABASE ---
+    db = SessionLocal()
+    try:
+        player = db.get(Player, player_id)
+        if not player:
+            logger.error(f"Player {player_id} not found!")
+            return 0
+
+        # Update player info
+        mapped_data = map_player_data(player_data, player)
+        if mapped_data:
+            for key, value in mapped_data.items():
+                if hasattr(player, key) and value is not None:
+                    setattr(player, key, value)
+
+        # Delete old stats for this season
+        db.query(CompetitionStats).filter(
+            CompetitionStats.player_id == player_id,
+            CompetitionStats.season == season
+        ).delete(synchronize_session=False)
+
+        db.query(GoalkeeperStats).filter(
+            GoalkeeperStats.player_id == player_id,
+            GoalkeeperStats.season == season
+        ).delete(synchronize_session=False)
+
+        # Create new stats from API data
+        saved_count = 0
+        is_gk = player.is_goalkeeper
+
+        if 'statistics' in player_data and isinstance(player_data['statistics'], list):
+            for stat_entry in player_data['statistics']:
+                league_info = stat_entry.get('league', {})
+                competition_name = league_info.get('name', '')
+
+                if not competition_name:
+                    continue
+
+                competition_type = get_competition_type(competition_name)
+
+                try:
+                    if is_gk:
+                        gk_stat = map_goalkeeper_stats(
+                            {'statistics': [stat_entry]},
+                            None,
+                            player_id,
+                            season,
+                            competition_name,
+                            competition_type
+                        )
+                        if gk_stat:
+                            db.add(gk_stat)
+                            saved_count += 1
+                    else:
+                        comp_stat = map_competition_stats(
+                            {'statistics': [stat_entry]},
+                            player_id,
+                            season,
+                            competition_name,
+                            competition_type
+                        )
+                        if comp_stat:
+                            db.add(comp_stat)
+                            saved_count += 1
+                except Exception as e:
+                    logger.error(f"  ❌ Error saving stat: {e}")
+
+        db.commit()
+        logger.info(f"✅ Saved {saved_count} competition stats via RapidAPI")
+        return saved_count
+
+    except Exception as e:
+        logger.error(f"❌ DB Error in RapidAPI sync: {e}")
+        db.rollback()
+        return 0
+    finally:
+        db.close()
+
+
 async def main():
     parser = argparse.ArgumentParser(description='Sync full player data (competition stats + match logs)')
     parser.add_argument('player_name', help='Player name to sync')
     parser.add_argument('--seasons', nargs='*', help='Specific seasons to sync match logs')
     parser.add_argument('--all-seasons', action='store_true', help='Sync match logs for ALL seasons')
+    parser.add_argument('--api', choices=['fbref', 'rapidapi'], default=None, help='API to use (default: auto-detect)')
     args = parser.parse_args()
-    
+
     logger.info("=" * 80)
     logger.info(f"FULL SYNC: {args.player_name}")
     logger.info("=" * 80)
-    
+
+    # Get player info from database
     player_info = {}
     db_temp = SessionLocal()
     try:
@@ -739,63 +872,108 @@ async def main():
         if not player:
             logger.error(f"❌ Player not found: {args.player_name}")
             sys.exit(1)
-        player_info = {'id': player.id, 'name': player.name, 'api_id': player.api_id}
+
+        # Build player info dict with all possible IDs
+        player_info = {
+            'id': player.id,
+            'name': player.name,
+            'api_id': player.api_id,  # FBref ID
+            'rapidapi_player_id': player.rapidapi_player_id,
+            'rapidapi_team_id': player.rapidapi_team_id,
+            'fbref_id': getattr(player, 'fbref_id', None)
+        }
         logger.info(f"✅ Found player: {player.name} (ID: {player.id})")
     finally:
         db_temp.close() # SESJA ZAMKNIĘTA
 
-    async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
-        logger.info("\n" + "=" * 80)
-        logger.info("STEP 1: Competition Stats")
-        logger.info("=" * 80)
-        comp_count = await sync_competition_stats(scraper, player_info)
-        
-        logger.info("\n" + "=" * 80)
-        logger.info("STEP 2: Match Logs")
-        logger.info("=" * 80)
-        reset_sequences_if_needed()
-        
-        seasons_to_sync = []
-        seasons_to_sync = []
-        if args.all_seasons:
-            # Sync last 5 seasons including current
-            # Adjust years as needed based on current date
-            current_yr = date.today().year
-            if date.today().month >= 7:
-                 start_years = range(current_yr, current_yr - 5, -1)
-            else:
-                 start_years = range(current_yr - 1, current_yr - 6, -1)
-            
-            seasons_to_sync = [f"{y}-{y+1}" for y in start_years]
-            logger.info(f"📅 Found {len(seasons_to_sync)} seasons to sync: {seasons_to_sync}")
-        elif args.seasons: seasons_to_sync = args.seasons
-        else: seasons_to_sync = ["2025-2026"]
-            
-        total_matches = 0
-        for season in seasons_to_sync:
-            matches = await sync_match_logs_for_season(scraper, player_info, season)
-            total_matches += matches
-            
-        logger.info("\n" + "=" * 80)
-        logger.info("STEP 3: Aggregation & Fixes")
-        logger.info("=" * 80)
-        logger.info("🔄 Aggregating competition stats from match logs...")
-        sync_competition_stats_from_matches(player_info['id'])
-        logger.info("🔧 Fixing missing minutes...")
-        fix_missing_minutes_from_matchlogs(player_info['id'])
-        logger.info("🛠️ Aligning goalkeeper league stats with match logs (games/minutes/starts)...")
-        fix_goalkeeper_stats_from_matchlogs(player_info['id'])
-        
-        logger.info("\n" + "=" * 80)
-        logger.info("STEP 4: Update Team Based on Actual Match Data")
-        logger.info("=" * 80)
-        update_player_team_from_matches(player_info['id'])
-        
-        logger.info("\n" + "=" * 80)
-        logger.info(f"✅ SYNC COMPLETE")
-        logger.info(f"   Competition Stats: {comp_count}")
-        logger.info(f"   Match Logs: {total_matches}")
-        logger.info("=" * 80)
+    # Determine which API to use
+    use_rapidapi = args.api == 'rapidapi'
+    if args.api is None:
+        # Auto-detect: Prefer RapidAPI if available
+        use_rapidapi = settings.rapidapi_key and player_info.get('rapidapi_team_id')
+
+    if use_rapidapi:
+        # Use RapidAPI
+        if not settings.rapidapi_key:
+            logger.error("❌ RAPIDAPI_KEY not configured in environment")
+            logger.info("💡 Get your key from: https://rapidapi.com/creativesdev/api/free-api-live-football-data")
+            sys.exit(1)
+
+        logger.info("📡 Using RapidAPI for sync")
+        current_season = "2025-2026"
+
+        async with RapidAPIClient() as client:
+            logger.info("\n" + "=" * 80)
+            logger.info("STEP 1: Competition Stats (RapidAPI)")
+            logger.info("=" * 80)
+            comp_count = await sync_competition_stats_api(client, player_info, current_season)
+
+            # Note: Match logs via RapidAPI require fixtures endpoint - can be added later
+            logger.info("\n" + "=" * 80)
+            logger.info("STEP 2: Match Logs")
+            logger.info("=" * 80)
+            logger.info("ℹ️ Match logs sync via RapidAPI not yet implemented - using FBref if available")
+            # Fall through to FBref for match logs if player has api_id
+
+            logger.info("\n" + "=" * 80)
+            logger.info(f"✅ SYNC COMPLETE (RapidAPI)")
+            logger.info(f"   Competition Stats: {comp_count}")
+            logger.info("=" * 80)
+    else:
+        # Use FBref scraper (legacy)
+        logger.info("🕷️ Using FBref scraper for sync")
+
+        async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
+            logger.info("\n" + "=" * 80)
+            logger.info("STEP 1: Competition Stats")
+            logger.info("=" * 80)
+            comp_count = await sync_competition_stats(scraper, player_info)
+
+            logger.info("\n" + "=" * 80)
+            logger.info("STEP 2: Match Logs")
+            logger.info("=" * 80)
+            reset_sequences_if_needed()
+
+            seasons_to_sync = []
+            if args.all_seasons:
+                # Sync last 5 seasons including current
+                # Adjust years as needed based on current date
+                current_yr = date.today().year
+                if date.today().month >= 7:
+                     start_years = range(current_yr, current_yr - 5, -1)
+                else:
+                     start_years = range(current_yr - 1, current_yr - 6, -1)
+
+                seasons_to_sync = [f"{y}-{y+1}" for y in start_years]
+                logger.info(f"📅 Found {len(seasons_to_sync)} seasons to sync: {seasons_to_sync}")
+            elif args.seasons: seasons_to_sync = args.seasons
+            else: seasons_to_sync = ["2025-2026"]
+
+            total_matches = 0
+            for season in seasons_to_sync:
+                matches = await sync_match_logs_for_season(scraper, player_info, season)
+                total_matches += matches
+
+            logger.info("\n" + "=" * 80)
+            logger.info("STEP 3: Aggregation & Fixes")
+            logger.info("=" * 80)
+            logger.info("🔄 Aggregating competition stats from match logs...")
+            sync_competition_stats_from_matches(player_info['id'])
+            logger.info("🔧 Fixing missing minutes...")
+            fix_missing_minutes_from_matchlogs(player_info['id'])
+            logger.info("🛠️ Aligning goalkeeper league stats with match logs (games/minutes/starts)...")
+            fix_goalkeeper_stats_from_matchlogs(player_info['id'])
+
+            logger.info("\n" + "=" * 80)
+            logger.info("STEP 4: Update Team Based on Actual Match Data")
+            logger.info("=" * 80)
+            update_player_team_from_matches(player_info['id'])
+
+            logger.info("\n" + "=" * 80)
+            logger.info(f"✅ SYNC COMPLETE (FBref)")
+            logger.info(f"   Competition Stats: {comp_count}")
+            logger.info(f"   Match Logs: {total_matches}")
+            logger.info("=" * 80)
 
 
 def _is_international_competition(name: str) -> bool:

@@ -13,6 +13,9 @@ from app.backend.database import SessionLocal
 from app.backend.models.player import Player
 from app.backend.models.player_match import PlayerMatch
 from app.backend.services.fbref_playwright_scraper import FBrefPlaywrightScraper
+from app.backend.services.rapidapi_client import RapidAPIClient
+from app.backend.services.data_mapper import map_match_logs_from_fixtures, normalize_season_for_api
+from app.backend.config import settings
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -183,8 +186,11 @@ async def main():
         print("\nExamples:")
         print('  python sync_match_logs.py "Robert Lewandowski"')
         print('  python sync_match_logs.py "Michał Helik" --season 2024-2025')
+        print('  python sync_match_logs.py "Robert Lewandowski" --api fbref')
+        print('  python sync_match_logs.py "Robert Lewandowski" --api rapidapi')
         sys.exit(1)
     player_name = sys.argv[1]
+
     # Parse season
     season = "2025-2026"
     if '--season' in sys.argv:
@@ -193,40 +199,86 @@ async def main():
             season = sys.argv[season_idx + 1]
         except:
             pass
+
+    # Parse API choice
+    api_choice = None
+    if '--api' in sys.argv:
+        try:
+            api_idx = sys.argv.index('--api')
+            api_choice = sys.argv[api_idx + 1]
+        except:
+            pass
+
     logger.info("=" * 60)
     logger.info(f"SYNC MATCH LOGS: {player_name}")
     logger.info(f"Season: {season}")
     logger.info("=" * 60)
+
+    # Get player from database
     db = SessionLocal()
     try:
-        # Find player
         player = db.query(Player).filter(Player.name.ilike(f"%{player_name}%")).first()
         if not player:
             logger.error(f"❌ Player not found: {player_name}")
             logger.info("💡 Add player first with: python quick_add_player.py")
             sys.exit(1)
         logger.info(f"✅ Found player: {player.name} (ID: {player.id})")
-        # Sync matches
-        async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
-            # Convert ORM to dict for sync_player_matches
-            player_data = {
-                'id': player.id,
-                'name': player.name,
-                'team': player.team,
-                'league': player.league,
-                'nationality': player.nationality,
-                'position': player.position,
-                'last_updated': player.last_updated,
-                'fbref_id': getattr(player, 'fbref_id', None),
-                'api_id': getattr(player, 'api_id', None)
-            }
-            matches_count = await sync_player_matches(scraper, player_data, season)
+
+        # Build player info dict
+        player_data = {
+            'id': player.id,
+            'name': player.name,
+            'team': player.team,
+            'league': player.league,
+            'nationality': player.nationality,
+            'position': player.position,
+            'last_updated': player.last_updated,
+            'fbref_id': getattr(player, 'fbref_id', None),
+            'api_id': getattr(player, 'api_id', None),
+            'rapidapi_player_id': player.rapidapi_player_id,
+            'rapidapi_team_id': player.rapidapi_team_id
+        }
+
+        # Determine which API to use
+        use_rapidapi = api_choice == 'rapidapi'
+        if api_choice is None:
+            # Auto-detect: Prefer RapidAPI if available
+            use_rapidapi = settings.rapidapi_key and player_data.get('rapidapi_team_id')
+
+        if use_rapidapi:
+            # Use RapidAPI
+            logger.info("📡 Using RapidAPI for match logs sync")
+
+            if not settings.rapidapi_key:
+                logger.error("❌ RAPIDAPI_KEY not configured")
+                logger.info("💡 Get your key from: https://rapidapi.com/creativesdev/api/free-api-live-football-data")
+                sys.exit(1)
+
+            # Note: RapidAPI match logs sync using fixtures endpoint
+            # This is a placeholder - full implementation would use get_fixtures()
+            logger.info("ℹ️ Match logs sync via RapidAPI fixtures - implementation pending")
+            logger.info("💡 Falling back to FBref if available...")
+
+            if player_data.get('api_id') or player_data.get('fbref_id'):
+                async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
+                    matches_count = await sync_player_matches(scraper, player_data, season)
+            else:
+                logger.warning("⚠️ No FBref ID available, cannot sync match logs")
+                matches_count = 0
+
+        else:
+            # Use FBref scraper (legacy)
+            logger.info("🕷️ Using FBref scraper for match logs sync")
+            async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
+                matches_count = await sync_player_matches(scraper, player_data, season)
+
         logger.info("=" * 60)
         if matches_count > 0:
             logger.info(f"✅ SUCCESS: Synced {matches_count} matches")
         else:
             logger.warning(f"⚠️ No matches synced")
         logger.info("=" * 60)
+
     except Exception as e:
         logger.error(f"❌ Error: {e}", exc_info=True)
     finally:

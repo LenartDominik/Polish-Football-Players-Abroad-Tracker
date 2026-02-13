@@ -20,8 +20,10 @@ async def get_player_stats(player_id: int, season: Optional[str] = None):
     """
     db = SessionLocal()
     try:
+        params = {"player_id": player_id}
+
         query_str = """
-        SELECT 
+        SELECT
             p.name,
             p.position,
             p.team,
@@ -39,21 +41,21 @@ async def get_player_stats(player_id: int, season: Optional[str] = None):
         FROM players p
         LEFT JOIN competition_stats cs ON p.id = cs.player_id
         WHERE p.id = :player_id
-        GROUP BY p.name, p.position, p.team, p.league, cs.season
         """
-        
-        params = {"player_id": player_id}
+
         if season:
             query_str += " AND cs.season = :season"
             params["season"] = season
-            
+
+        query_str += " GROUP BY p.name, p.position, p.team, p.league, cs.season"
+
         result = pd.read_sql(text(query_str), db.bind, params=params)
-        
+
         if result.empty:
             raise HTTPException(status_code=404, detail="Player not found")
-        
+
         return result.to_dict(orient="records")
-    
+
     finally:
         db.close()
 

@@ -8,15 +8,23 @@ from .player_match import PlayerMatch
 
 class Player(Base):
     __tablename__ = "players"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    api_id = Column(String, unique=True, index=True, nullable=True) 
+    api_id = Column(String, unique=True, index=True, nullable=True)  # FBref ID (legacy)
     name = Column(String, index=True)
     team = Column(String)
     league = Column(String)
     nationality = Column(String)
     position = Column(String, nullable=True)
     last_updated = Column(Date)
+
+    # RapidAPI IDs for new API-based sync
+    rapidapi_player_id = Column(Integer, nullable=True, index=True)
+    rapidapi_team_id = Column(Integer, nullable=True, index=True)
+
+    # Competition level: 1 = Top leagues (2x/week sync), 2 = Lower leagues (1x/week sync)
+    # Top leagues: Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, Primeira Liga, Süper Lig
+    level = Column(Integer, default=2, nullable=False)
     
     # Relacje - istniejące
     season_stats = relationship(

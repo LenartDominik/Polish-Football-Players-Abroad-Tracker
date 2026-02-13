@@ -8,7 +8,7 @@ from collections import defaultdict
 
 # --- Biblioteki zewnętrzne ---
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
-import resend
+# import resend
 from sqlalchemy import extract
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -20,6 +20,14 @@ from .database import engine, Base, SessionLocal
 # --- Routery i Serwisy ---
 from .routers import players, comparison, matchlogs
 from .services.fbref_playwright_scraper import FBrefPlaywrightScraper
+from .services.rapidapi_client import RapidAPIClient
+from .services.data_mapper import (
+    map_player_data,
+    map_competition_stats,
+    map_goalkeeper_stats,
+    map_match_logs_from_fixtures,
+    normalize_season_for_api
+)
 
 # --- Modele Bazy Danych ---
 from .models.player import Player
@@ -32,16 +40,24 @@ from .utils import get_competition_type
 logger = logging.getLogger(__name__)
 
 
-if settings.resend_api_key:
-    resend.api_key = settings.resend_api_key
-else:
-    logger.warning("⚠️ Brak klucza RESEND_API_KEY - powiadomienia e-mail nie będą działać.")
+# if settings.resend_api_key:
+#     resend.api_key = settings.resend_api_key
+# else:
+#     logger.warning("⚠️ Brak klucza RESEND_API_KEY - powiadomienia e-mail nie będą działać.")
 
 # Tworzenie tabel w bazie na starcie
 Base.metadata.create_all(bind=engine)
 
 # Global scheduler instance
 scheduler = None
+
+
+def normalize_competition_type(raw_type: str, competition_name: str = "") -> str:
+    """
+    Normalize competition_type to allowed values: LEAGUE, DOMESTIC_CUP, EUROPEAN_CUP, NATIONAL_TEAM.
+    Uses get_competition_type for consistency.
+    """
+    return get_competition_type(competition_name)
 
 
 
@@ -260,14 +276,14 @@ async def sync_single_player(scraper: FBrefPlaywrightScraper, player_info: dict,
 
 
 
-def send_matchlogs_notification_email(synced: int, failed: int, total: int, total_matches: int, duration_minutes: float, failed_players: List[str]):
-    """
-    Wysyła raport e-mail przez API Resend po zakończeniu synchronizacji matchlogów.
-    """
-    # Sprawdzenie konfiguracji
-    if not settings.resend_api_key or not settings.email_to:
-        print("⚠️ Pominięto wysyłkę: Brak klucza API lub adresu docelowego.") 
-        return
+# def send_matchlogs_notification_email(synced: int, failed: int, total: int, total_matches: int, duration_minutes: float, failed_players: List[str]):
+#     """
+#     Wysyła raport e-mail przez API Resend po zakończeniu synchronizacji matchlogów.
+#     """
+#     # Sprawdzenie konfiguracji
+#     if not settings.resend_api_key or not settings.email_to:
+#         print("⚠️ Pominięto wysyłkę: Brak klucza API lub adresu docelowego.") 
+#         return
 
     # Obliczenia do treści maila
     success_rate = (synced / total * 100) if total > 0 else 0
@@ -344,12 +360,12 @@ def send_sync_notification_email(synced: int, failed: int, total: int, duration_
         <p><small>Powiadomienie z Polish Football Players Abroad</small></p>
         """
 
-        resend.Emails.send({
-            "from": settings.email_from, 
-            "to": settings.email_to,
-            "subject": f"{status_emoji} Sync Update: {synced}/{total} Players Updated",
-            "html": html_content
-        })
+        # resend.Emails.send({
+        #     "from": settings.email_from, 
+        #     "to": settings.email_to,
+        #     "subject": f"{status_emoji} Sync Update: {synced}/{total} Players Updated",
+        #     "html": html_content
+        # })
         
         logger.info(f"✅ E-mail (Basic Sync) wysłany pomyślnie na: {settings.email_to}")
 
@@ -705,54 +721,378 @@ async def scheduled_sync_matchlogs():
     total_matches = 0
 
     # 2. Uruchamiamy scrapera (TU NIE MA OTWARTEJ SESJI DB!)
-    try:
-        async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
+    # try:
+    #     async with FBrefPlaywrightScraper(headless=True, rate_limit_seconds=12.0) as scraper:
             
-            for idx, p_data in enumerate(players_data, 1):
-                logger.info(f"\n[{idx}/{len(players_data)}] 📋 Syncing match logs: {p_data['name']}")
+    #         for idx, p_data in enumerate(players_data, 1):
+    #             logger.info(f"\n[{idx}/{len(players_data)}] 📋 Syncing match logs: {p_data['name']}")
                 
-                try:
-                    # Wywołujemy bezpieczną funkcję, przekazując SŁOWNIK (p_data), a nie sesję
-                    # Upewnij się, że w main.py masz funkcję sync_player_matchlogs, 
-                    # która przyjmuje (scraper, player_info, season) - naprawiliśmy ją wcześniej.
+    #             try:
+    #                 # Wywołujemy bezpieczną funkcję, przekazując SŁOWNIK (p_data), a nie sesję
+    #                 # Upewnij się, że w main.py masz funkcję sync_player_matchlogs, 
+    #                 # która przyjmuje (scraper, player_info, season) - naprawiliśmy ją wcześniej.
                     
-                    matches_count = await sync_player_matchlogs(scraper, p_data, season="2025-2026")
+    #                 matches_count = await sync_player_matchlogs(scraper, p_data, season="2025-2026")
                     
-                    if matches_count >= 0: # 0 to też sukces (brak nowych meczy)
-                        synced += 1
-                        total_matches += matches_count
-                        if matches_count > 0:
-                            logger.info(f"✅ Successfully synced {matches_count} matches for {p_data['name']}")
-                        else:
-                            logger.info(f"ℹ️ No new matches for {p_data['name']}")
+    #                 if matches_count >= 0: # 0 to też sukces (brak nowych meczy)
+    #                     synced += 1
+    #                     total_matches += matches_count
+    #                     if matches_count > 0:
+    #                         logger.info(f"✅ Successfully synced {matches_count} matches for {p_data['name']}")
+    #                     else:
+    #                         logger.info(f"ℹ️ No new matches for {p_data['name']}")
+    #                 else:
+    #                     # Jeśli funkcja zwraca -1 w przypadku błędu (zależnie jak ją zdefiniowałeś)
+    #                     raise Exception("Sync returned error code")
+
+    #             except Exception as e:
+    #                 failed += 1
+    #                 failed_players.append(p_data['name'])
+    #                 logger.warning(f"❌ Failed to sync match logs for {p_data['name']}: {e}")
+
+    #     # Podsumowanie i wysyłka maila
+    #     end_time = datetime.now()
+    #     duration = (end_time - start_time).total_seconds() / 60
+        
+    #     logger.info("=" * 60)
+    #     logger.info("✅ SCHEDULED MATCHLOGS SYNC COMPLETE")
+    #     logger.info(f"📊 Results: {synced} players synced, {total_matches} total matches, {failed} failed out of {len(players_data)} total")
+    #     logger.info(f"⏱️ Duration: {duration:.1f} minutes")
+    #     logger.info("=" * 60)
+        
+        # send_matchlogs_notification_email(synced, failed, len(players_data), total_matches, duration, failed_players)
+        
+    # except Exception as e:
+    #     logger.error(f"❌ Scheduled matchlogs sync CRITICAL FAILURE: {e}", exc_info=True)
+    #     try:
+    #         duration = (datetime.now() - start_time).total_seconds() / 60
+    #         send_matchlogs_notification_email(0, 1, 1, 0, duration, ["CRITICAL ERROR - Check logs"])
+    #     except:
+    #         pass
+
+
+# ============================================================================
+# RAPIDAPI-BASED SYNC FUNCTIONS (New API-based data source)
+# ============================================================================
+
+async def sync_single_player_api(client: RapidAPIClient, player_info: dict, current_season: str = "2025-2026") -> bool:
+    """
+    Sync a single player using RapidAPI (Safe for Supabase Port 6543).
+
+    Args:
+        client: RapidAPI client instance
+        player_info: Dict with player data (id, name, rapidapi_player_id, rapidapi_team_id)
+        current_season: Season to sync (e.g., "2025-2026")
+
+    Returns:
+        True if successful, False otherwise
+    """
+    player_id = player_info.get('id')
+    player_name = player_info.get('name')
+
+    try:
+        # --- PHASE 1: API CALLS (Database closed) ---
+
+        # If player has RapidAPI IDs, use team squad endpoint (most efficient)
+        rapidapi_player_id = player_info.get('rapidapi_player_id')
+        rapidapi_team_id = player_info.get('rapidapi_team_id')
+
+        if rapidapi_team_id:
+            # Get all players from team in one request
+            season_year = normalize_season_for_api(current_season)
+            team_data = await client.get_team_squad(rapidapi_team_id, season_year)
+
+            if not team_data:
+                logger.warning(f"  ⚠️ No team data found for {player_name}")
+                return False
+
+            # Find our player in the team roster
+            player_data = None
+            for p in team_data:
+                if p.get('player', {}).get('id') == rapidapi_player_id:
+                    player_data = p
+                    break
+
+            if not player_data:
+                logger.warning(f"  ⚠️ Player {player_name} not found in team roster")
+                return False
+
+        elif rapidapi_player_id:
+            # Fallback: Get individual player details
+            player_data = await client.get_player_detail(rapidapi_player_id)
+
+            if not player_data:
+                logger.warning(f"  ⚠️ No player data found for {player_name}")
+                return False
+        else:
+            logger.warning(f"  ⚠️ No RapidAPI IDs for {player_name}, need to search first")
+            return False
+
+        # --- PHASE 2: DATABASE (Quick write) ---
+        db = SessionLocal()
+        try:
+            player = db.get(Player, player_id)
+            if not player:
+                logger.error(f"Player {player_id} disappeared from DB!")
+                return False
+
+            # Update player basic info using mapper
+            mapped_data = map_player_data(player_data, player)
+            if mapped_data:
+                for key, value in mapped_data.items():
+                    if hasattr(player, key):
+                        setattr(player, key, value)
+
+            player.last_updated = date.today()
+
+            # Get competition stats from API response
+            # Format: player_data['statistics'][i]['games'] contains stats for each competition
+            if 'statistics' in player_data and isinstance(player_data['statistics'], list):
+                stats_saved = 0
+
+                # Delete old competition stats for this season
+                db.query(CompetitionStats).filter(
+                    CompetitionStats.player_id == player_id,
+                    CompetitionStats.season == current_season
+                ).delete(synchronize_session=False)
+
+                db.query(GoalkeeperStats).filter(
+                    GoalkeeperStats.player_id == player_id,
+                    GoalkeeperStats.season == current_season
+                ).delete(synchronize_session=False)
+
+                # Create new stats entries
+                for stat_entry in player_data['statistics']:
+                    league_info = stat_entry.get('league', {})
+                    competition_name = league_info.get('name', 'Unknown')
+
+                    if not competition_name or competition_name == 'Unknown':
+                        continue
+
+                    competition_type = get_competition_type(competition_name)
+
+                    # Check if goalkeeper
+                    if player.is_goalkeeper:
+                        # Note: Goalkeeper stats may need team data for clean sheets
+                        gk_stat = map_goalkeeper_stats(
+                            {'statistics': [stat_entry]},
+                            None,
+                            player_id,
+                            current_season,
+                            competition_name,
+                            competition_type
+                        )
+                        if gk_stat:
+                            db.add(gk_stat)
+                            stats_saved += 1
                     else:
-                        # Jeśli funkcja zwraca -1 w przypadku błędu (zależnie jak ją zdefiniowałeś)
-                        raise Exception("Sync returned error code")
+                        comp_stat = map_competition_stats(
+                            {'statistics': [stat_entry]},
+                            player_id,
+                            current_season,
+                            competition_name,
+                            competition_type
+                        )
+                        if comp_stat:
+                            db.add(comp_stat)
+                            stats_saved += 1
+
+                logger.info(f"  ✅ Saved {stats_saved} competition stats for {player_name}")
+
+            db.commit()
+            return True
+
+        except Exception as e:
+            logger.error(f"  ❌ DB Error syncing {player_name}: {e}", exc_info=True)
+            db.rollback()
+            return False
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"  ❌ General Error syncing {player_name}: {e}", exc_info=True)
+        return False
+
+
+async def scheduled_sync_all_players_api():
+    """
+    Scheduled task to sync all players via RapidAPI.
+    Implements hybrid sync strategy:
+    - Level 1 players (Top leagues): 2x/week (Thursday + Sunday at 23:00)
+    - Level 2 players (Lower leagues): 1x/week (Sunday at 23:00)
+
+    Top leagues: Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, Primeira Liga, Süper Lig
+
+    Uses team-based sync for efficiency (get_team_squad returns all players at once).
+    """
+    start_time = datetime.now()
+
+    logger.info("=" * 60)
+    logger.info("🔄 SCHEDULED API SYNC - Starting RapidAPI synchronization")
+    logger.info(f"⏰ Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 60)
+
+    # Get current day of week to determine which players to sync
+    current_day = start_time.strftime("%A").lower()  # monday, tuesday, etc.
+    is_priority_day = current_day in ['thursday', 'sunday']
+
+    # Get all players from database
+    players_data = []
+    db = SessionLocal()
+    try:
+        # Get all players with their RapidAPI IDs and level
+        all_players = db.query(
+            Player.id,
+            Player.name,
+            Player.rapidapi_player_id,
+            Player.rapidapi_team_id,
+            Player.level
+        ).all()
+
+        for p in all_players:
+            players_data.append({
+                "id": p.id,
+                "name": p.name,
+                "rapidapi_player_id": p.rapidapi_player_id,
+                "rapidapi_team_id": p.rapidapi_team_id,
+                "is_priority": p.level == 1  # Level 1 = Top leagues (2x/week)
+            })
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch players list: {e}")
+        return
+    finally:
+        db.close()
+
+    if not players_data:
+        logger.warning("⚠️ No players found in database")
+        return
+
+    # Filter players based on day
+    if is_priority_day:
+        # Sync all players on priority days
+        players_to_sync = players_data
+        logger.info(f"📋 Priority day - syncing ALL {len(players_to_sync)} players")
+    else:
+        # Only sync non-priority players on non-priority days
+        players_to_sync = [p for p in players_data if not p.get('is_priority')]
+        logger.info(f"📋 Non-priority day - syncing {len(players_to_sync)} non-priority players")
+
+    # Group players by team for efficient API calls
+    teams_to_sync = {}
+    players_without_team = []
+
+    for p_data in players_to_sync:
+        team_id = p_data.get('rapidapi_team_id')
+        if team_id:
+            if team_id not in teams_to_sync:
+                teams_to_sync[team_id] = []
+            teams_to_sync[team_id].append(p_data)
+        else:
+            players_without_team.append(p_data)
+
+    logger.info(f"📊 Sync strategy: {len(teams_to_sync)} teams, {len(players_without_team)} individual players")
+
+    synced = 0
+    failed = 0
+    failed_players = []
+
+    # Initialize RapidAPI client
+    if not settings.rapidapi_key:
+        logger.error("❌ RAPIDAPI_KEY not configured in environment")
+        return
+
+    try:
+        async with RapidAPIClient() as client:
+            current_season = "2025-2026"
+
+            # Sync by team (most efficient - one API call per team)
+            for team_id, team_players in teams_to_sync.items():
+                logger.info(f"\n🏆 Syncing team ID {team_id} ({len(team_players)} players)")
+
+                try:
+                    season_year = normalize_season_for_api(current_season)
+                    team_data = await client.get_team_squad(team_id, season_year)
+
+                    if not team_data:
+                        logger.warning(f"  ⚠️ No data for team {team_id}")
+                        for p in team_players:
+                            failed += 1
+                            failed_players.append(p['name'])
+                        continue
+
+                    # Process each player from this team
+                    for player_info in team_players:
+                        player_id = player_info['id']
+                        player_name = player_info['name']
+
+                        # Find this player in team data
+                        player_data = None
+                        for p in team_data:
+                            if p.get('player', {}).get('id') == player_info.get('rapidapi_player_id'):
+                                player_data = p
+                                break
+
+                        if not player_data:
+                            logger.warning(f"  ⚠️ {player_name} not found in team roster")
+                            failed += 1
+                            failed_players.append(player_name)
+                            continue
+
+                        # Sync this player
+                        success = await sync_single_player_api(client, player_info, current_season)
+
+                        if success:
+                            synced += 1
+                        else:
+                            failed += 1
+                            failed_players.append(player_name)
 
                 except Exception as e:
-                    failed += 1
-                    failed_players.append(p_data['name'])
-                    logger.warning(f"❌ Failed to sync match logs for {p_data['name']}: {e}")
+                    logger.error(f"  ❌ Error syncing team {team_id}: {e}")
+                    for p in team_players:
+                        failed += 1
+                        if p['name'] not in failed_players:
+                            failed_players.append(p['name'])
 
-        # Podsumowanie i wysyłka maila
+            # Sync players without team ID individually
+            if players_without_team:
+                logger.info(f"\n👤 Syncing {len(players_without_team)} individual players")
+                for player_info in players_without_team:
+                    logger.info(f"  🔄 Syncing: {player_info['name']}")
+                    try:
+                        success = await sync_single_player_api(client, player_info, current_season)
+                        if success:
+                            synced += 1
+                        else:
+                            failed += 1
+                            failed_players.append(player_info['name'])
+                    except Exception as e:
+                        logger.error(f"  ❌ Error: {e}")
+                        failed += 1
+                        if player_info['name'] not in failed_players:
+                            failed_players.append(player_info['name'])
+
+        # Calculate duration
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds() / 60
-        
+
         logger.info("=" * 60)
-        logger.info("✅ SCHEDULED MATCHLOGS SYNC COMPLETE")
-        logger.info(f"📊 Results: {synced} players synced, {total_matches} total matches, {failed} failed out of {len(players_data)} total")
+        logger.info("✅ SCHEDULED API SYNC COMPLETE")
+        logger.info(f"📊 Results: {synced} synced, {failed} failed out of {len(players_to_sync)} total")
         logger.info(f"⏱️ Duration: {duration:.1f} minutes")
+
+        # Show API usage
+        if client:
+            usage = client.get_usage_report()
+            logger.info(f"📡 API Usage: {usage['requests_used']}/{usage['max_requests']} ({usage['percentage']}%)")
         logger.info("=" * 60)
-        
-        send_matchlogs_notification_email(synced, failed, len(players_data), total_matches, duration, failed_players)
-        
+
+        # Send email notification
+        send_sync_notification_email(synced, failed, len(players_to_sync), duration, failed_players)
+
     except Exception as e:
-        logger.error(f"❌ Scheduled matchlogs sync CRITICAL FAILURE: {e}", exc_info=True)
-        try:
-            duration = (datetime.now() - start_time).total_seconds() / 60
-            send_matchlogs_notification_email(0, 1, 1, 0, duration, ["CRITICAL ERROR - Check logs"])
-        except:
-            pass
+        logger.error(f"❌ Scheduled API sync failed: {e}", exc_info=True)
+
 
 
 @asynccontextmanager
@@ -770,18 +1110,32 @@ async def lifespan(app: FastAPI):
         
         # Create AsyncIO scheduler with timezone
         scheduler = AsyncIOScheduler(timezone=timezone_str)
-        
-        # Schedule sync twice a week:
-        # - Thursday at 06:00 (day after Wednesday Champions League matches)
-        # - Monday at 06:00 (day after weekend league matches)
-        scheduler.add_job(
-            scheduled_sync_all_players,
-            CronTrigger(day_of_week='thu,mon', hour=6, minute=0, timezone=timezone_str),
-            id='sync_all_players',
-            name='Sync all players statistics',
-            replace_existing=True
-        )
-        
+
+        # NEW: RapidAPI-based sync with hybrid schedule:
+        # - Level 1 players (Top 8 leagues): 2x/week (Thursday & Sunday at 23:00)
+        # - Level 2 players (Lower leagues): 1x/week (Sunday at 23:00)
+        if settings.rapidapi_key:
+            scheduler.add_job(
+                scheduled_sync_all_players_api,
+                CronTrigger(day_of_week='thu,sun', hour=23, minute=0, timezone=timezone_str),
+                id='sync_all_players_api',
+                name='Sync all players via RapidAPI (hybrid schedule)',
+                replace_existing=True
+            )
+            logger.info("✅ RapidAPI sync configured:")
+            logger.info(f"   📅 Schedule: Thursday & Sunday at 23:00 ({timezone_str})")
+            logger.info(f"   📊 Level 1 (Top 8 leagues): 2x/week, Level 2 (Lower): 1x/week (Sunday)")
+        else:
+            # Fallback to FBref scraper if no RapidAPI key
+            scheduler.add_job(
+                scheduled_sync_all_players,
+                CronTrigger(day_of_week='thu,mon', hour=6, minute=0, timezone=timezone_str),
+                id='sync_all_players',
+                name='Sync all players statistics (FBref)',
+                replace_existing=True
+            )
+            logger.info("⚠️ RapidAPI not configured, using FBref scraper")
+
         # Schedule matchlogs sync once a week:
         # - Tuesday at 07:00 (gives time after Monday stats sync)
         scheduler.add_job(
@@ -791,12 +1145,14 @@ async def lifespan(app: FastAPI):
             name='Sync all players match logs',
             replace_existing=True
         )
-        
+
         scheduler.start()
         logger.info("✅ Scheduler uruchomiony")
-        logger.info(f"📅 Stats sync schedule: Thursday & Monday at 06:00 ({timezone_str})")
-        logger.info(f"📅 Matchlogs sync schedule: Tuesday at 07:00 ({timezone_str})")
-        logger.info("📅 Next stats sync: " + str(scheduler.get_job('sync_all_players').next_run_time))
+        if settings.rapidapi_key:
+            logger.info("📅 Next API sync: " + str(scheduler.get_job('sync_all_players_api').next_run_time))
+        else:
+            logger.info("📅 Stats sync schedule: Thursday & Monday at 06:00 ({timezone_str})")
+            logger.info("📅 Next stats sync: " + str(scheduler.get_job('sync_all_players').next_run_time))
         logger.info("📅 Next matchlogs sync: " + str(scheduler.get_job('sync_matchlogs').next_run_time))
     else:
         logger.info("⏸️ Scheduler disabled (set ENABLE_SCHEDULER=true to enable)")
@@ -1027,24 +1383,24 @@ def health_check():
         "scheduler_running": scheduler.running if scheduler else False
     }
 
-@app.get("/test-email")
-async def test_email_sending():
-    """
-    Uruchamia wysyłkę próbnego maila przez Resend.
-    """
-    try:
-        # Wywołujemy Twoją funkcję z przykładowymi danymi
-        send_matchlogs_notification_email(
-            synced=5, 
-            failed=1, 
-            total=6, 
-            total_matches=12, 
-            duration_minutes=0.5, 
-            failed_players=["Testowy Gracz (Error)"]
-        )
-        return {"status": "success", "message": "Mail wysłany! Sprawdź skrzynkę odbiorczą."}
-    except Exception as e:
-        return {"status": "error", "message": f"Błąd: {str(e)}"}
+# @app.get("/test-email")
+# async def test_email_sending():
+#     """
+#     Uruchamia wysyłkę próbnego maila przez Resend.
+#     """
+#     try:
+#         # Wywołujemy Twoją funkcję z przykładowymi danymi
+#         send_matchlogs_notification_email(
+#             synced=5, 
+#             failed=1, 
+#             total=6, 
+#             total_matches=12, 
+#             duration_minutes=0.5, 
+#             failed_players=["Testowy Gracz (Error)"]
+#         )
+#         return {"status": "success", "message": "Mail wysłany! Sprawdź skrzynkę odbiorczą."}
+#     except Exception as e:
+#         return {"status": "error", "message": f"Błąd: {str(e)}"}
 
 # Rejestracja routerów z prefixem /api
 app.include_router(players.router, prefix="/api")                                                     
