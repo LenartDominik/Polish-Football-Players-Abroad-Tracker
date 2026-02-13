@@ -1342,10 +1342,10 @@ def root():
         },
         "scheduler": {
             "enabled": os.getenv("ENABLE_SCHEDULER", "false").lower() == "true",
-            "stats_sync_schedule": "Monday & Thursday at 06:00 (Europe/Warsaw)",
+            "stats_sync_schedule": "Thursday & Sunday at 23:00 (Europe/Warsaw)" if settings.rapidapi_key else "Monday & Thursday at 06:00 (Europe/Warsaw)",
             "matchlogs_sync_schedule": "Tuesday at 07:00 (Europe/Warsaw)",
-            "next_stats_sync": str(scheduler.get_job('sync_all_players').next_run_time) if scheduler and scheduler.running else "Scheduler disabled",
-            "next_matchlogs_sync": str(scheduler.get_job('sync_matchlogs').next_run_time) if scheduler and scheduler.running else "Scheduler disabled"
+            "next_stats_sync": str(scheduler.get_job('sync_all_players_api').next_run_time) if scheduler and scheduler.running and settings.rapidapi_key and scheduler.get_job('sync_all_players_api') else (str(scheduler.get_job('sync_all_players').next_run_time) if scheduler and scheduler.running and scheduler.get_job('sync_all_players') else "Scheduler disabled"),
+            "next_matchlogs_sync": str(scheduler.get_job('sync_matchlogs').next_run_time) if scheduler and scheduler.running and scheduler.get_job('sync_matchlogs') else "Scheduler disabled"
         },
         "links": {
             "github": "https://github.com/LenartDominik/Polish-Football-Players-Abroad",
