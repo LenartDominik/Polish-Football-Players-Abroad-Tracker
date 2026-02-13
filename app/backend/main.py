@@ -603,6 +603,77 @@ def health_check():
         "scheduler_running": scheduler.running if scheduler else False
     }
 
+
+@app.post("/api/sync-player/{player_id}", tags=["Sync"])
+async def sync_single_player_endpoint(player_id: int):
+    """
+    Ręcznie zsynchronizuj pojedynczego gracza z RapidAPI
+
+    Uycie: POST /api/sync-player/123
+    """
+    from .database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        player = db.get(Player, player_id)
+        if not player:
+            raise HTTPException(status_code=404, detail="Player not found")
+
+        # Prepare player info
+        player_info = {
+            "id": player.id,
+            "name": player.name,
+            "rapidapi_player_id": player.rapidapi_player_id,
+            "rapidapi_team_id": player.rapidapi_team_id
+        }
+
+        if not player_info.get("rapidapi_player_id") and not player_info.get("rapidapi_team_id"):
+            raise HTTPException(
+                status_code=400,
+                detail="Player does not have RapidAPI IDs configured. Please add rapidapi_player_id and rapidapi_team_id to database."
+            )
+
+        # Sync using RapidAPI
+        async with RapidAPIClient() as client:
+            success = await sync_single_player_api(client, player_info)
+
+            if success:
+                return {
+                    "status": "success",
+                    "message": f"Player {player.name} synced successfully",
+                    "player_id": player_id,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to sync player from RapidAPI"
+                )
+    finally:
+        db.close()
+
+
+@app.post("/api/sync-all", tags=["Sync"])
+async def sync_all_players_endpoint():
+    """
+    Ręcznie zsynchronizuj wszystkich graczy z RapidAPI
+
+    Uycie: POST /api/sync-all
+    """
+    try:
+        # Run in background to avoid timeout
+        import asyncio
+        asyncio.create_task(scheduled_sync_all_players_api())
+
+        return {
+            "status": "started",
+            "message": "Sync all players task started in background",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Rejestracja routerów z prefixem /api
 app.include_router(players.router, prefix="/api")
 app.include_router(comparison.router, prefix="/api")
