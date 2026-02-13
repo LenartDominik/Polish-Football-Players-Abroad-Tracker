@@ -172,11 +172,11 @@ def map_competition_stats(
 
 def map_goalkeeper_stats(
     api_response: Dict,
-    team_stats_response: Dict = None,
     player_id: int,
     season: str,
     competition_name: str,
-    competition_type: str = None
+    competition_type: str = None,
+    team_stats_response: Dict = None
 ) -> GoalkeeperStats:
     """
     Convert RapidAPI stats to GoalkeeperStats model
