@@ -3,12 +3,14 @@ Polish Players Tracker International - Streamlit Dashboard
 A simple dashboard to browse and filter Polish football players data.
 Usage:
     streamlit run streamlit_app_cloud.py
-    
+
 Multi-page app: Check sidebar for additional pages like Compare Players
 """
 import streamlit as st
 import pandas as pd
 from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).parent / "app" / "frontend"))
 from api_client import get_api_client
 import math
 import os
@@ -516,9 +518,9 @@ def load_data():
     """Load players data from API."""
     try:
         api_client = get_api_client()
-        
-        # Pobierz dane graczy
-        players_df = api_client.get_all_players()
+
+        # Pobierz dane graczy (limit=500 to get all players)
+        players_df = api_client.get_all_players(limit=500)
         
         # Disable global stats fetching to save egress/bandwidth
         comp_stats_df = pd.DataFrame() 
