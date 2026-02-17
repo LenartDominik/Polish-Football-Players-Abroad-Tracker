@@ -1,8 +1,8 @@
 # 📚 API Documentation - Polish Football Players Abroad
 
-**Base URL:** `http://localhost:8000` (local) or `https://your-backend.onrender.com` (production)  
-**Interactive Docs:** 
-- **Swagger UI:** `/docs` 
+**Base URL:** `http://localhost:8000` (local) or `https://your-backend.onrender.com` (production)
+**Interactive Docs:**
+- **Swagger UI:** `/docs`
 - **ReDoc:** `/redoc`
 
 > ✅ **All endpoints listed below are tested and working**
@@ -13,7 +13,7 @@
 
 **This API is for educational and non-commercial use only.**
 
-- **Data Source:** FBref.com (© Sports Reference LLC)
+- **Data Source:** RapidAPI free-api-live-football-data
 - **Usage:** Educational and portfolio purposes only
 - **NOT for commercial use** without proper licensing
 
@@ -33,6 +33,8 @@ See [LEGAL_NOTICE.md](LEGAL_NOTICE.md) for full details.
 2. [Players](#players)
 3. [Comparison](#comparison)
 4. [Matchlogs](#matchlogs)
+5. [Leaderboard](#leaderboard)
+6. [Live Matches](#live-matches)
 
 ---
 
@@ -65,25 +67,25 @@ Get comprehensive API information including scheduler status, database info, and
 ```json
 {
   "title": "Polish Football Players Abroad - Backend API",
-  "version": "0.7.4",
-  "description": "Backend API for tracking Polish football players statistics from FBref",
+  "version": "1.0.0",
+  "description": "Backend API for tracking Polish football players statistics from RapidAPI",
   "features": [
-    "📊 Player statistics from FBref.com",
-    "🔄 Automated data synchronization with Playwright",
+    "📊 Player statistics from RapidAPI",
+    "🔄 Automated data synchronization",
     "⚖️ Visual player comparison (field players & goalkeepers)",
-    "🤖 Automated scheduler (stats 2x/week, matchlogs 1x/week)"
+    "🏆 League leaderboards (goals, assists, rating)",
+    "📺 Live match tracking"
   ],
   "scheduler": {
     "enabled": true,
-    "stats_sync_schedule": "Monday & Thursday at 06:00 (Europe/Warsaw)",
-    "matchlogs_sync_schedule": "Tuesday at 07:00 (Europe/Warsaw)",
-    "next_stats_sync": "2025-12-04 06:00:00+01:00",
-    "next_matchlogs_sync": "2025-12-09 07:00:00+01:00"
+    "stats_sync_schedule": "Thursday & Sunday at 23:00 (Europe/Warsaw)",
+    "matchlogs_sync_schedule": "Daily at 09:00",
+    "cache_cleanup": "Daily at 03:00"
   },
   "database": {
     "type": "PostgreSQL",
     "provider": "Supabase",
-    "tier": "Free (500MB storage, 2GB transfer/month)"
+    "tier": "Free (500MB storage)"
   }
 }
 ```
@@ -99,11 +101,15 @@ Get comprehensive API information including scheduler status, database info, and
 Get list of all Polish players in the database.
 
 **Query Parameters:**
-- None (returns all players)
+- `league` (string, optional): Filter by league
+- `team` (string, optional): Filter by team
+- `position` (string, optional): Filter by position
+- `limit` (int, optional): Max results (default: 100)
 
 **Example:**
 ```bash
 curl http://localhost:8000/api/players/
+curl "http://localhost:8000/api/players/?league=Serie%20A"
 ```
 
 **Response:**
@@ -116,8 +122,10 @@ curl http://localhost:8000/api/players/
     "current_team": "Barcelona",
     "league": "La Liga",
     "nationality": "Poland",
-    "fbref_id": "8d78e732",
-    "api_id": null
+    "rapidapi_player_id": 12345,
+    "rapidapi_team_id": 529,
+    "is_goalkeeper": false,
+    "last_updated": "2025-12-02"
   },
   {
     "id": 2,
@@ -126,8 +134,10 @@ curl http://localhost:8000/api/players/
     "current_team": "Juventus",
     "league": "Serie A",
     "nationality": "Poland",
-    "fbref_id": "a6d9c54e",
-    "api_id": null
+    "rapidapi_player_id": 67890,
+    "rapidapi_team_id": 496,
+    "is_goalkeeper": true,
+    "last_updated": "2025-12-02"
   }
 ]
 ```
@@ -157,8 +167,10 @@ curl http://localhost:8000/api/players/1
   "current_team": "Barcelona",
   "league": "La Liga",
   "nationality": "Poland",
-  "fbref_id": "8d78e732",
-  "api_id": null
+  "rapidapi_player_id": 12345,
+  "rapidapi_team_id": 529,
+  "is_goalkeeper": false,
+  "last_updated": "2025-12-02"
 }
 ```
 
@@ -173,6 +185,10 @@ curl http://localhost:8000/api/players/1
 **GET** `/api/players/stats/competition`
 
 Get all competition statistics for all players (competition_stats table).
+
+**Query Parameters:**
+- `season` (string, optional): Filter by season (e.g., "2025-2026")
+- `competition_type` (string, optional): LEAGUE, EUROPEAN_CUPS, DOMESTIC_CUPS, NATIONAL_TEAM
 
 **Example:**
 ```bash
@@ -193,14 +209,10 @@ curl http://localhost:8000/api/players/stats/competition
     "minutes": 1260,
     "goals": 12,
     "assists": 5,
-    "xg": 10.5,
-    "npxg": 9.2,
-    "xa": 3.8,
-    "penalty_goals": 3,
-    "shots": 45,
-    "shots_on_target": 28,
     "yellow_cards": 2,
-    "red_cards": 0
+    "red_cards": 0,
+    "penalty_goals": 3,
+    "data_source": "rapidapi"
   }
 ]
 ```
@@ -230,20 +242,9 @@ curl http://localhost:8000/api/players/stats/goalkeeper
     "games": 15,
     "games_starts": 15,
     "minutes": 1350,
-    "goals_against": 18,
-    "goals_against_per90": 1.2,
-    "shots_on_target_against": 65,
-    "saves": 47,
-    "save_percentage": 72.3,
+    "goals_conceded": 18,
     "clean_sheets": 5,
-    "clean_sheet_percentage": 33.3,
-    "wins": 8,
-    "draws": 4,
-    "losses": 3,
-    "penalties_attempted": 2,
-    "penalties_allowed": 1,
-    "penalties_saved": 1,
-    "penalties_missed": 0
+    "data_source": "rapidapi"
   }
 ]
 ```
@@ -276,24 +277,9 @@ curl http://localhost:8000/api/players/stats/matches
     "minutes_played": 90,
     "goals": 1,
     "assists": 1,
-    "shots": 4,
-    "shots_on_target": 3,
-    "xg": 0.8,
-    "xa": 0.3,
-    "passes_completed": 25,
-    "passes_attempted": 32,
-    "pass_completion_pct": 78.1,
-    "key_passes": 2,
-    "tackles": 1,
-    "interceptions": 0,
-    "blocks": 0,
-    "touches": 45,
-    "dribbles_completed": 2,
-    "carries": 15,
-    "fouls_committed": 1,
-    "fouls_drawn": 2,
     "yellow_cards": 0,
-    "red_cards": 0
+    "red_cards": 0,
+    "data_source": "rapidapi"
   }
 ]
 ```
@@ -317,7 +303,7 @@ Get all statistics for a single player, grouped by season.
 **Example:**
 ```bash
 curl http://localhost:8000/api/comparison/players/1/stats
-curl http://localhost:8000/api/comparison/players/1/stats?season=2025-2026
+curl "http://localhost:8000/api/comparison/players/1/stats?season=2025-2026"
 ```
 
 **Response:**
@@ -334,10 +320,7 @@ curl http://localhost:8000/api/comparison/players/1/stats?season=2025-2026
     "assists": 5,
     "yellow_cards": 2,
     "red_cards": 0,
-    "minutes_played": 1260,
-    "xG": 10.5,
-    "xA": 3.8,
-    "games_starts": 14
+    "minutes_played": 1260
   }
 ]
 ```
@@ -354,7 +337,6 @@ Compare statistics of two players. **Goalkeepers can only be compared with other
 - `player1_id` (int, required): ID of first player
 - `player2_id` (int, required): ID of second player
 - `season` (string, optional): Season to compare (default: latest season 2025-2026)
-- `stats` (list[string], optional): List of specific stats to compare (default: all)
 
 **Example:**
 ```bash
@@ -383,9 +365,6 @@ curl "http://localhost:8000/api/comparison/compare?player1_id=2&player2_id=3"
     "yellow_cards": 2,
     "red_cards": 0,
     "minutes_played": 1260,
-    "xG": 10.5,
-    "xA": 3.8,
-    "games_starts": 14,
     "G+A_per_90": 1.21
   },
   "player2": {
@@ -400,9 +379,6 @@ curl "http://localhost:8000/api/comparison/compare?player1_id=2&player2_id=3"
     "yellow_cards": 3,
     "red_cards": 0,
     "minutes_played": 1120,
-    "xG": 7.2,
-    "xA": 1.5,
-    "games_starts": 12,
     "G+A_per_90": 0.80
   },
   "comparison_date": "2025-12-02T12:00:00",
@@ -410,66 +386,10 @@ curl "http://localhost:8000/api/comparison/compare?player1_id=2&player2_id=3"
 }
 ```
 
-**Response (Goalkeepers):**
-```json
-{
-  "player1": {
-    "id": 2,
-    "name": "Wojciech Szczęsny",
-    "position": "Goalkeeper",
-    "team": "Juventus",
-    "league": "Serie A",
-    "matches": 15,
-    "games_starts": 15,
-    "minutes_played": 1350,
-    "goals_against": 18,
-    "goals_against_per90": 1.2,
-    "shots_on_target_against": 65,
-    "saves": 47,
-    "save_percentage": 72.3,
-    "clean_sheets": 5,
-    "clean_sheet_percentage": 33.3,
-    "wins": 8,
-    "draws": 4,
-    "losses": 3,
-    "penalties_attempted": 2,
-    "penalties_allowed": 1,
-    "penalties_saved": 1,
-    "penalties_missed": 0
-  },
-  "player2": {
-    "id": 3,
-    "name": "Łukasz Skorupski",
-    "position": "Goalkeeper",
-    "team": "Bologna",
-    "league": "Serie A",
-    "matches": 14,
-    "games_starts": 14,
-    "minutes_played": 1260,
-    "goals_against": 22,
-    "goals_against_per90": 1.57,
-    "shots_on_target_against": 70,
-    "saves": 48,
-    "save_percentage": 68.6,
-    "clean_sheets": 3,
-    "clean_sheet_percentage": 21.4,
-    "wins": 6,
-    "draws": 5,
-    "losses": 3,
-    "penalties_attempted": 3,
-    "penalties_allowed": 2,
-    "penalties_saved": 1,
-    "penalties_missed": 0
-  },
-  "comparison_date": "2025-12-02T12:00:00",
-  "player_type": "goalkeeper"
-}
-```
-
 **Status Codes:**
 - `200 OK` - Comparison successful
 - `400 Bad Request` - Trying to compare goalkeeper with field player
-- `404 Not Found` - One or both players not found, or no data for specified season
+- `404 Not Found` - One or both players not found
 
 ---
 
@@ -494,9 +414,7 @@ curl "http://localhost:8000/api/comparison/available-stats?player_type=goalkeepe
   "offensive": [
     {"key": "goals", "label": "Goals", "type": "count"},
     {"key": "assists", "label": "Assists", "type": "count"},
-    {"key": "G+A_per_90", "label": "G+A per 90", "type": "decimal"},
-    {"key": "xG", "label": "Expected Goals (xG)", "type": "decimal"},
-    {"key": "xA", "label": "Expected Assists (xA)", "type": "decimal"}
+    {"key": "G+A_per_90", "label": "G+A per 90", "type": "decimal"}
   ],
   "defensive": [
     {"key": "yellow_cards", "label": "Yellow Cards", "type": "count"},
@@ -504,37 +422,6 @@ curl "http://localhost:8000/api/comparison/available-stats?player_type=goalkeepe
   ],
   "general": [
     {"key": "matches", "label": "Matches Played", "type": "count"},
-    {"key": "games_starts", "label": "Games Started", "type": "count"}
-  ]
-}
-```
-
-**Response (Goalkeeper):**
-```json
-{
-  "goalkeeper_specific": [
-    {"key": "saves", "label": "Saves", "type": "count"},
-    {"key": "save_percentage", "label": "Save %", "type": "percentage"},
-    {"key": "clean_sheets", "label": "Clean Sheets", "type": "count"},
-    {"key": "clean_sheet_percentage", "label": "Clean Sheet %", "type": "percentage"},
-    {"key": "goals_against", "label": "Goals Against", "type": "count"},
-    {"key": "goals_against_per90", "label": "Goals Against per 90", "type": "decimal"},
-    {"key": "shots_on_target_against", "label": "Shots on Target Against", "type": "count"}
-  ],
-  "penalties": [
-    {"key": "penalties_attempted", "label": "Penalties Attempted", "type": "count"},
-    {"key": "penalties_saved", "label": "Penalties Saved", "type": "count"},
-    {"key": "penalties_allowed", "label": "Penalties Allowed", "type": "count"},
-    {"key": "penalties_missed", "label": "Penalties Missed", "type": "count"}
-  ],
-  "performance": [
-    {"key": "wins", "label": "Wins", "type": "count"},
-    {"key": "draws", "label": "Draws", "type": "count"},
-    {"key": "losses", "label": "Losses", "type": "count"}
-  ],
-  "general": [
-    {"key": "matches", "label": "Matches Played", "type": "count"},
-    {"key": "games_starts", "label": "Games Started", "type": "count"},
     {"key": "minutes_played", "label": "Minutes Played", "type": "count"}
   ]
 }
@@ -595,22 +482,6 @@ curl "http://localhost:8000/api/matchlogs/1?limit=10"
       "minutes_played": 90,
       "goals": 1,
       "assists": 1,
-      "shots": 4,
-      "shots_on_target": 3,
-      "xg": 0.8,
-      "xa": 0.3,
-      "passes_completed": 25,
-      "passes_attempted": 32,
-      "pass_completion_pct": 78.1,
-      "key_passes": 2,
-      "tackles": 1,
-      "interceptions": 0,
-      "blocks": 0,
-      "touches": 45,
-      "dribbles_completed": 2,
-      "carries": 15,
-      "fouls_committed": 1,
-      "fouls_drawn": 2,
       "yellow_cards": 0,
       "red_cards": 0
     }
@@ -657,10 +528,6 @@ curl "http://localhost:8000/api/matchlogs/1/stats?season=2025-2026"
     "total_minutes": 1260,
     "total_goals": 12,
     "total_assists": 5,
-    "total_shots": 45,
-    "total_shots_on_target": 28,
-    "total_xg": 10.5,
-    "total_xa": 3.8,
     "total_yellow_cards": 2,
     "total_red_cards": 0,
     "avg_minutes_per_match": 84.0,
@@ -669,10 +536,6 @@ curl "http://localhost:8000/api/matchlogs/1/stats?season=2025-2026"
   }
 }
 ```
-
-**Status Codes:**
-- `200 OK` - Stats retrieved
-- `404 Not Found` - Player not found
 
 ---
 
@@ -712,49 +575,315 @@ curl http://localhost:8000/api/matchlogs/match/19244
     "goals": 1,
     "assists": 1
   },
-  "shooting": {
-    "shots": 4,
-    "shots_on_target": 3,
-    "xg": 0.8
-  },
-  "passing": {
-    "passes_completed": 25,
-    "passes_attempted": 32,
-    "pass_completion_pct": 78.1,
-    "key_passes": 2,
-    "xa": 0.3
-  },
-  "defense": {
-    "tackles": 1,
-    "interceptions": 0,
-    "blocks": 0
-  },
-  "possession": {
-    "touches": 45,
-    "dribbles_completed": 2,
-    "carries": 15
-  },
   "discipline": {
-    "fouls_committed": 1,
-    "fouls_drawn": 2,
     "yellow_cards": 0,
     "red_cards": 0
   }
 }
 ```
 
-**Status Codes:**
-- `200 OK` - Match found
-- `404 Not Found` - Match not found
+---
+
+## 🏆 Leaderboard (NEW!)
+
+### Get Top Scorers
+
+**GET** `/api/leaderboard/goals/{league_name}`
+
+Get top scorers for a specific league.
+
+**Path Parameters:**
+- `league_name` (string, required): League name (e.g., "Serie A", "Premier League", "La Liga")
+
+**Available Leagues:**
+- Premier League
+- La Liga
+- Bundesliga
+- Serie A
+- Ligue 1
+- Eredivisie
+- Primeira Liga
+- Belgian Pro League
+- Scottish Premiership
+- Super Lig
+- Champions League
+- Europa League
+- Conference League
+
+**Example:**
+```bash
+curl http://localhost:8000/api/leaderboard/goals/Serie%20A
+```
+
+**Response:**
+```json
+{
+  "league_name": "Serie A",
+  "league_id": 55,
+  "category": "goals",
+  "players": [
+    {
+      "rank": 1,
+      "player_id": 12345,
+      "name": "Mateo Retegui",
+      "team": "Atalanta",
+      "position": "FW",
+      "value": 15.0,
+      "nationality": "Argentina"
+    },
+    {
+      "rank": 2,
+      "player_id": 67890,
+      "name": "Lautaro Martínez",
+      "team": "Inter",
+      "position": "FW",
+      "value": 12.0,
+      "nationality": "Argentina"
+    }
+  ]
+}
+```
+
+---
+
+### Get Top Assists
+
+**GET** `/api/leaderboard/assists/{league_name}`
+
+Get top assist providers for a league.
+
+**Example:**
+```bash
+curl http://localhost:8000/api/leaderboard/assists/Premier%20League
+```
+
+**Response:** Same structure as top scorers, with `category: "assists"`
+
+---
+
+### Get Top Rated Players
+
+**GET** `/api/leaderboard/rating/{league_name}`
+
+Get top rated players for a league.
+
+**Example:**
+```bash
+curl http://localhost:8000/api/leaderboard/rating/Bundesliga
+```
+
+**Response:** Same structure as top scorers, with `category: "rating"`
+
+---
+
+### Get All Leaderboards
+
+**GET** `/api/leaderboard/all/{league_name}`
+
+Get all leaderboards (goals, assists, rating) for a league in one request.
+
+**Example:**
+```bash
+curl http://localhost:8000/api/leaderboard/all/La%20Liga
+```
+
+**Response:**
+```json
+{
+  "league_name": "La Liga",
+  "league_id": 140,
+  "top_scorers": [...],
+  "top_assists": [...],
+  "top_rated": [...]
+}
+```
+
+---
+
+### Get Available Leagues
+
+**GET** `/api/leaderboard/leagues`
+
+Get list of available leagues for leaderboard.
+
+**Example:**
+```bash
+curl http://localhost:8000/api/leaderboard/leagues
+```
+
+**Response:**
+```json
+{
+  "leagues": [
+    {"name": "Premier League", "id": 39},
+    {"name": "La Liga", "id": 140},
+    {"name": "Bundesliga", "id": 78},
+    {"name": "Serie A", "id": 55},
+    {"name": "Ligue 1", "id": 61},
+    {"name": "Champions League", "id": 2},
+    {"name": "Europa League", "id": 3}
+  ]
+}
+```
+
+---
+
+## 📺 Live Matches (NEW!)
+
+### Get Today's Matches
+
+**GET** `/api/live/today`
+
+Get all matches for today involving Polish players.
+
+**Example:**
+```bash
+curl http://localhost:8000/api/live/today
+```
+
+**Response:**
+```json
+{
+  "date": "2025-12-02",
+  "live_matches": [
+    {
+      "event_id": 123456,
+      "home_team": "Roma",
+      "away_team": "Inter",
+      "home_score": 1,
+      "away_score": 1,
+      "status": "LIVE 45'",
+      "competition": "Serie A",
+      "polish_players": [
+        {"name": "Piotr Zieliński", "team": "Inter"},
+        {"name": "Nicola Zalewski", "team": "Roma"}
+      ]
+    }
+  ],
+  "scheduled_matches": [
+    {
+      "event_id": 123457,
+      "home_team": "Juventus",
+      "away_team": "Milan",
+      "status": "NS",
+      "kickoff_time": "20:45",
+      "competition": "Serie A",
+      "polish_players": [
+        {"name": "Arkadiusz Milik", "team": "Juventus"}
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Get Live Matches Only
+
+**GET** `/api/live/live`
+
+Get only currently live matches.
+
+**Example:**
+```bash
+curl http://localhost:8000/api/live/live
+```
+
+**Response:**
+```json
+{
+  "live_matches": [
+    {
+      "event_id": 123456,
+      "home_team": "Roma",
+      "away_team": "Inter",
+      "home_score": 1,
+      "away_score": 1,
+      "status": "LIVE 67'",
+      "competition": "Serie A",
+      "polish_players": [...]
+    }
+  ]
+}
+```
+
+---
+
+### Get Team Matches
+
+**GET** `/api/live/team/{team_name}`
+
+Get live/scheduled matches for a specific team.
+
+**Path Parameters:**
+- `team_name` (string, required): Team name
+
+**Example:**
+```bash
+curl http://localhost:8000/api/live/team/Roma
+curl http://localhost:8000/api/live/team/Juventus
+```
+
+**Response:**
+```json
+{
+  "team": "Roma",
+  "matches": [
+    {
+      "event_id": 123456,
+      "home_team": "Roma",
+      "away_team": "Inter",
+      "status": "LIVE 45'",
+      "home_score": 1,
+      "away_score": 1
+    }
+  ]
+}
+```
+
+---
+
+### Check Player Playing Today
+
+**GET** `/api/live/player/{player_id}`
+
+Check if a specific player is playing today.
+
+**Path Parameters:**
+- `player_id` (int, required): Player database ID
+
+**Example:**
+```bash
+curl http://localhost:8000/api/live/player/1
+```
+
+**Response:**
+```json
+{
+  "player_id": 1,
+  "player_name": "Robert Lewandowski",
+  "is_playing_today": true,
+  "matches": [
+    {
+      "event_id": 123458,
+      "team": "Barcelona",
+      "opponent": "Real Madrid",
+      "status": "NS",
+      "kickoff_time": "21:00",
+      "competition": "La Liga"
+    }
+  ]
+}
+```
 
 ---
 
 ## 📚 Additional Documentation
 
-- **[TROUBLESHOOTING_DATABASE.md](TROUBLESHOOTING_DATABASE.md)** - Database connection troubleshooting
-- **[SCHEDULER_STATUS_GUIDE.md](SCHEDULER_STATUS_GUIDE.md)** - Scheduler monitoring and configuration
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Troubleshooting guide
 - **[README.md](README.md)** - Complete project documentation
 - **[LEGAL_NOTICE.md](LEGAL_NOTICE.md)** - Legal terms and data attribution
+- **[RAPIDAPI_SETUP.md](RAPIDAPI_SETUP.md)** - RapidAPI configuration guide
 
 ---
 
@@ -765,7 +894,7 @@ All endpoints return standard HTTP status codes and JSON error messages:
 **400 Bad Request:**
 ```json
 {
-  "detail": "Goalkeepers can only be compared with other goalkeepers. Please select two goalkeepers or two field players."
+  "detail": "Goalkeepers can only be compared with other goalkeepers."
 }
 ```
 
@@ -792,12 +921,14 @@ All endpoints return standard HTTP status codes and JSON error messages:
 {
   id: number
   name: string
-  position: string  // "Goalkeeper", "Defender", "Midfielder", "Striker", etc.
+  position: string  // "Goalkeeper", "Defender", "Midfielder", "Striker"
   current_team: string | null
   league: string | null
   nationality: string
-  fbref_id: string | null
-  api_id: number | null
+  rapidapi_player_id: number | null
+  rapidapi_team_id: number | null
+  is_goalkeeper: boolean
+  last_updated: string  // ISO date
 }
 ```
 
@@ -814,14 +945,10 @@ All endpoints return standard HTTP status codes and JSON error messages:
   minutes: number
   goals: number
   assists: number
-  xg: number
-  npxg: number
-  xa: number
-  penalty_goals: number
-  shots: number
-  shots_on_target: number
   yellow_cards: number
   red_cards: number
+  penalty_goals: number
+  data_source: string  // "rapidapi"
 }
 ```
 
@@ -836,20 +963,9 @@ All endpoints return standard HTTP status codes and JSON error messages:
   games: number
   games_starts: number
   minutes: number
-  goals_against: number
-  goals_against_per90: number
-  shots_on_target_against: number
-  saves: number
-  save_percentage: number
+  goals_conceded: number
   clean_sheets: number
-  clean_sheet_percentage: number
-  wins: number
-  draws: number
-  losses: number
-  penalties_attempted: number
-  penalties_allowed: number
-  penalties_saved: number
-  penalties_missed: number
+  data_source: string
 }
 ```
 
@@ -867,24 +983,9 @@ All endpoints return standard HTTP status codes and JSON error messages:
   minutes_played: number
   goals: number
   assists: number
-  shots: number
-  shots_on_target: number
-  xg: number
-  xa: number
-  passes_completed: number
-  passes_attempted: number
-  pass_completion_pct: number
-  key_passes: number
-  tackles: number
-  interceptions: number
-  blocks: number
-  touches: number
-  dribbles_completed: number
-  carries: number
-  fouls_committed: number
-  fouls_drawn: number
   yellow_cards: number
   red_cards: number
+  data_source: string
 }
 ```
 

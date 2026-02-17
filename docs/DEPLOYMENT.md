@@ -4,10 +4,10 @@
 
 ## 🎯 About This Project
 
-This project demonstrates **web scraping automation** for regularly fetching and processing current player statistics from **fbref.com**. The **FastAPI backend** cyclically updates the PostgreSQL database, while the **Streamlit frontend** provides a user-friendly interface for data exploration. The platform automates data retrieval, validation, and presentation.
+This project demonstrates **REST API integration** for regularly fetching and processing current player statistics from **RapidAPI Football API**. The **FastAPI backend** cyclically updates the PostgreSQL database, while the **Streamlit frontend** provides a user-friendly interface for data exploration. The platform automates data retrieval, validation, and presentation.
 
 **Key Technologies:**
-- 🕸️ **Web Scraping:** Playwright headless browser
+- 🌐 **REST API:** RapidAPI Football API integration
 - 🔄 **Automation:** APScheduler for periodic sync
 - 🗄️ **Database:** PostgreSQL (Supabase) with SQLAlchemy ORM
 - 🔗 **API:** FastAPI with auto-generated docs

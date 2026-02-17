@@ -8,6 +8,8 @@ from app.backend.models.player import Player
 from app.backend.models.competition_stats import CompetitionStats
 from app.backend.models.goalkeeper_stats import GoalkeeperStats
 from app.backend.models.player_match import PlayerMatch
+from app.backend.services.cache_manager import CacheManager, generate_cache_key
+from app.backend.utils.errors import handle_api_error
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +24,23 @@ def get_all_players(
     name: str | None = None,
     team: str | None = None,
     league: str | None = None,
-    limit: int = 200,
+    limit: int = 50,
     offset: int = 0,
 ):
     """Zwraca listę piłkarzy z opcjonalnymi filtrami i paginacją to limit payload size."""
     try:
+        # Try cache first for common queries
+        cache_manager = CacheManager(db)
+        cache_key = generate_cache_key("players_list", name=name, team=team, league=league, limit=limit, offset=offset)
+
+        # For small result sets, use cache
+        if limit <= 100:
+            cached_data = cache_manager.get_sync("players_list", cache_key)
+            if cached_data is not None:
+                logger.info(f"Cache HIT for players list, returning {len(cached_data)} players")
+                return cached_data
+
+        # Cache miss or large query - fetch from database
         query = db.query(Player)
         if name:
             query = query.filter(Player.name.ilike(f"%{name}%"))
@@ -36,11 +50,17 @@ def get_all_players(
             query = query.filter(Player.league.ilike(f"%{league}%"))
         query = query.order_by(Player.id.asc()).offset(max(offset, 0)).limit(max(min(limit, 1000), 1))
         players = query.all()
+
         logger.info(f"Returning {len(players)} players (limit={limit}, offset={offset})")
+
+        # Cache small result sets - convert to dict for JSON serialization
+        if limit <= 100 and players:
+            players_data = [PlayerResponse.model_validate(p).model_dump(mode='json') for p in players]
+            cache_manager.set_sync("players_list", cache_key, players_data)
+
         return players
     except Exception as e:
-        logger.error(f"Error getting players: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        handle_api_error(e, context="get_all_players")
 
 @router.get("/{player_id}", response_model=PlayerResponse)
 def get_player(player_id: int, db: Session = Depends(get_db)):
@@ -85,9 +105,12 @@ def get_all_competition_stats(
                 "minutes": s.minutes,
                 "goals": s.goals,
                 "assists": s.assists,
+                "ga_plus": s.ga_plus,  # Goals + Assists
+                "ga_per_90": s.ga_per_90,  # (Goals + Assists) per 90 minutes
                 "xg": s.xg,
                 "npxg": s.npxg,
                 "xa": s.xa,
+                "xg_xa": s.xg_xa,  # xG + xA
                 "penalty_goals": s.penalty_goals,
                 "shots": s.shots,
                 "shots_on_target": s.shots_on_target,
@@ -97,8 +120,7 @@ def get_all_competition_stats(
             for s in stats
         ]
     except Exception as e:
-        logger.error(f"Error getting competition stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        handle_api_error(e, context="get_all_competition_stats")
 
 
 @router.get("/stats/goalkeeper")
@@ -151,8 +173,7 @@ def get_all_goalkeeper_stats(
             for s in stats
         ]
     except Exception as e:
-        logger.error(f"Error getting goalkeeper stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        handle_api_error(e, context="get_all_goalkeeper_stats")
 
 
 @router.get("/stats/matches")
@@ -195,28 +216,5 @@ def get_all_matches(db: Session = Depends(get_db)):
             for m in matches
         ]
     except Exception as e:
-        logger.error(f"Error getting matches: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ============================================================================
-# OLD ENDPOINTS REMOVED
-# ============================================================================
-# The following endpoints have been removed as they used deprecated services:
-# 
-# 1. API-Football integration (football_api.py):
-#    - GET /sync/api - Synchronized players from API-Football
-#
-# 2. Player season stats table (deprecated):
-#    - POST /{player_id}/sync/current-season
-#    - GET /fbref/search/{player_name}
-#    - POST /fbref/sync/{player_name}
-#    - POST /fbref/sync-all
-#
-# These have been replaced by:
-# - sync_player.py (for individual player sync)
-# - sync_all_playwright.py (for bulk sync)
-# These scripts write directly to competition_stats and goalkeeper_stats tables.
-#
-# See CLEANUP_OLD_ENDPOINTS.md for details.
+        handle_api_error(e, context="get_all_matches")
 

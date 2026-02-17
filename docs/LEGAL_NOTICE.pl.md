@@ -2,13 +2,13 @@
 
 ## 📊 Data Sources
 
-This application aggregates football statistics from publicly available sources:
+This application aggregates football statistics from:
 
-### Primary Data Source: FBref.com
-- **Owner:** Sports Reference LLC
+### Primary Data Source: RapidAPI Football API
+- **Provider:** RapidAPI Marketplace
+- **API:** free-api-live-football-data
 - **Usage:** Educational and non-commercial purposes only
-- **Attribution:** All statistics data © Sports Reference LLC (FBref.com)
-- **Terms:** https://www.sports-reference.com/termsofuse.html
+- **Terms:** https://rapidapi.com/creativesdev/api/free-api-live-football-data/terms
 
 ---
 
@@ -37,9 +37,9 @@ This application aggregates football statistics from publicly available sources:
 ## 📜 Copyright & Ownership
 
 ### Data Ownership:
-- **Player Statistics:** © Sports Reference LLC (FBref.com)
-- **Match Data:** © Football Data International Ltd / respective leagues
-- **Player Photos:** © Getty Images / respective copyright holders (if used)
+- **Player Statistics:** Provided by RapidAPI free-api-live-football-data
+- **Match Data:** Sourced from football data providers via RapidAPI
+- **Application Code:** MIT License (see LICENSE file)
 
 ### Application Code:
 - **License:** MIT License (see LICENSE file)

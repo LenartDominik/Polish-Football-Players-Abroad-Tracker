@@ -588,21 +588,18 @@ if selected_player_str != 'All':
 if not search_name and selected_team == 'All' and selected_player_str == 'All':
     st.info("👆 Enter a player name, select a team, or choose a player to view statistics")
     
-    # Footer - FBref Attribution (pokazuj też na głównej stronie)
+    # Footer - Data Source Attribution
     st.divider()
     st.markdown("""
     <div style='text-align: center; padding: 2rem 0 1rem 0; color: #8A8A8A; font-size: 0.875rem;'>
         <p style='margin-bottom: 0.5rem;'>
-            📊 <strong>Data Source:</strong> 
-            <a href='https://fbref.com/' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
-                FBref.com
-            </a> (Sports Reference LLC)
-        </p>
-        <p style='font-size: 0.75rem; color: #B8B8B8; margin-bottom: 0.5rem;'>
-            Player statistics powered by FBref - The leading source for football statistics
+            📊 <strong>Data Source:</strong>
+            <a href='https://rapidapi.com/creativesdev/api/free-api-live-football-data' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
+                RapidAPI Football API
+            </a> (free-api-live-football-data)
         </p>
         <p style='font-size: 0.7rem; color: #6A6A6A; margin-bottom: 0;'>
-            Polish Football Players Abroad is an independent project and is not affiliated with FBref.com
+            Polish Football Players Abroad is an independent project for educational purposes
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1651,7 +1648,7 @@ if st.sidebar.button("🔄 Refresh Data"):
 st.divider()
 st.markdown("""
 <div style='text-align: center; padding: 2rem 0 1rem 0; color: #8A8A8A; font-size: 0.875rem;'>
-    <p>📊 <strong>Data Source:</strong> <a href='https://fbref.com/' target='_blank'>FBref.com</a></p>
+    <p>📊 <strong>Data Source:</strong> <a href='https://rapidapi.com/creativesdev/api/free-api-live-football-data' target='_blank'>RapidAPI Football API</a></p>
 </div>
 """, unsafe_allow_html=True)
 

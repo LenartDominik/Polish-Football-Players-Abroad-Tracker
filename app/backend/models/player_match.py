@@ -48,6 +48,9 @@ class PlayerMatch(Base):
     fouls_drawn = Column(Integer, default=0)
     yellow_cards = Column(Integer, default=0)
     red_cards = Column(Integer, default=0)
+
+    # Data source: 'rapidapi'
+    data_source = Column(String, nullable=False, default='rapidapi', index=True)
     
     # Relacja
     player = relationship("Player", back_populates="matches")

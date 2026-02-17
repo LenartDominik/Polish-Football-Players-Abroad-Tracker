@@ -6,14 +6,33 @@
 
 **This API is for EDUCATIONAL and NON-COMMERCIAL use only.**
 
-- **Data Source:** FBref.com (© Sports Reference LLC)
+- **Data Source:** RapidAPI Football API (free-api-live-football-data)
 - **Usage:** Portfolio, CV, education
 - **NOT for commercial use** without proper licensing
 - **See:** [LEGAL_NOTICE.md](../../LEGAL_NOTICE.md) in root directory
 
 # Polish Football Players Abroad - Backend API
 
-FastAPI backend do zarządzania danymi polskich piłkarzy grających za granicą. Automatyczna synchronizacja danych z FBref.com przez Playwright scraper.
+FastAPI backend do zarządzania danymi polskich piłkarzy grających za granicą. Automatyczna synchronizacja danych z RapidAPI.
+
+## 🆕 Nowe funkcje
+
+### Live Match Tracking
+- **Śledzenie meczów na żywo** - Sprawdź czy Polak gra dziś
+- **Endpointy live**: `/api/live/today`, `/api/live/live`, `/api/live/team/{team_name}`
+- **Integracja z RapidAPI** - automatyczne pobieranie live matches
+
+### Caching Layer
+- **Wielowarstwowy cache** dla optymalizacji zapytań API
+- **TTL**: lineups 24h, squads 6h, matches 1h
+- **Cache store** - dedykowana tabela w bazie danych
+- **Automatic cleanup** - codziennie o 03:00
+
+### Rate Limiter & Quota Monitor
+- **Monitoring użycia API** - Śledzenie dziennego i miesięcznego zużycia
+- **Alerting** - ostrzeżenia przy 80% dziennego, 90% miesięcznego limitu
+- **API usage metrics** - tabela w bazie danych
+- **Daily quota check** - codziennie o 12:00
 
 ## 🆕 Nowe w v0.7.3
 
@@ -208,7 +227,7 @@ Invoke-RestMethod "http://127.0.0.1:8000/api/matches/123"
 
 ## 🗄️ Struktura bazy danych
 
-Backend używa SQLite (`players.db`).
+Backend używa **PostgreSQL** (Supabase - darmowe 500MB).
 
 ### Główne tabele:
 
@@ -224,7 +243,7 @@ Podstawowe informacje o graczach.
 | position | VARCHAR | Pozycja |
 | nationality | VARCHAR | Narodowość |
 | is_goalkeeper | BOOLEAN | Czy bramkarz |
-| api_id | INTEGER | ID z FBref |
+| rapidapi_player_id | INTEGER | ID z RapidAPI |
 | last_updated | DATE | Data ostatniej aktualizacji |
 
 #### `competition_stats`
@@ -249,7 +268,6 @@ Statystyki zawodników w różnych rozgrywkach (dla zawodników nie-bramkarzy).
 
 **Uwagi:**
 - Mecze reprezentacji używają **roku kalendarzowego** (np. "2025"), nie sezonu ("2025-2026")
-- Kwalifikacje Champions League są **agregowane** z Europa League jako "Europa Lg" (standard FBref)
 
 #### `goalkeeper_stats`
 Statystyki bramkarzy w różnych rozgrywkach.
@@ -320,8 +338,11 @@ app/backend/
 │
 └── services/              # Serwisy biznesowe
     ├── __init__.py
-    ├── fbref_playwright_scraper.py  # Główny scraper FBref
-   
+    ├── rapidapi_client.py          # RapidAPI client
+    ├── match_logs_sync.py          # Match logs sync service
+    ├── cache_manager.py            # Cache manager
+    └── rate_limiter.py             # Rate limiter and quota monitor
+
 ```
 
 ## 🔧 Konfiguracja
@@ -331,8 +352,8 @@ app/backend/
 Utwórz plik `.env` w głównym katalogu projektu:
 
 ```env
-# Baza danych
-DATABASE_URL=sqlite:///./players.db
+# Baza danych (Supabase PostgreSQL)
+DATABASE_URL=postgresql://postgres.xxxxx:[YOUR-PASSWORD]@aws-1-eu-west-1.pooler.supabase.com:6543/postgres
 
 # Scheduler (automatyczna synchronizacja)
 ENABLE_SCHEDULER=false
@@ -347,8 +368,10 @@ EMAIL_TO=recipient@example.com
 ```
 
 **Scheduler:** Uruchom `ENABLE_SCHEDULER=true` aby włączyć automatyczną synchronizację:
-- Stats: poniedziałek i czwartek o 6:00 AM
-- Matchlogs: wtorek o 7:00 AM
+- Stats: Czwartek i Niedziela o 23:00 (Top 8 lig: 2x/tydzień, pozostałe: 1x/tydzień)
+- Match logs: Czwartek i Niedziela o 23:00 (Top 8 lig), Niedziela o 23:00 (niższe ligi)
+- Cache cleanup: Codziennie o 03:00
+- Quota monitoring: Codziennie o 12:00
 - Email notifications po każdej synchronizacji
 - Zobacz status schedulera: `GET /` (root endpoint zawiera scheduler info)
 
@@ -358,37 +381,37 @@ Backend **NIE** posiada endpointów do synchronizacji. Zamiast tego użyj skrypt
 
 ### Synchronizacja pojedynczego gracza:
 ```powershell
-# Obecny sezon (2025-2026) - competition stats + match logs
-python sync_player_full.py "Robert Lewandowski" --all-seasons
+# Podstawowa synchronizacja (statystyki z zespołu)
+python sync_rapidapi.py "Robert Lewandowski"
 
-# Konkretny sezon
-python sync_player_full.py "Robert Lewandowski" --all-seasons --season=2024-2025
-
-# Wszystkie sezony
-python sync_player_full.py "Robert Lewandowski" --all-seasons --all-seasons
+# Z ręcznymi danymi
+python sync_rapidapi.py "Ziolkowski" --games 15 --minutes 1350
 ```
 
 ### Synchronizacja wszystkich graczy:
 ```powershell
-# Removed - use scheduler on Render (automatic sync Mon/Thu/Tue)
+# Użyj schedulera na Render (automatyczna synchronizacja)
 ```
 
 ### Synchronizacja matchlogs (szczegóły meczów):
 ```powershell
-python sync_match_logs.py "Robert Lewandowski"
+# Automatyczna przez scheduler - Czwartek/Niedziela 23:00
+# Lub:
+python sync_match_logs_rapidapi.py "Robert Lewandowski"
 ```
 
 ### Automatyczna synchronizacja:
 Ustaw `ENABLE_SCHEDULER=true` w pliku `.env` - scheduler zsynchronizuje wszystkich graczy automatycznie:
 
 **Scheduler jobs:**
-- **Stats sync**: Poniedziałek i Czwartek o 6:00 (Europe/Warsaw) - synchronizacja statystyk
-- **Matchlogs sync**: Wtorek o 7:00 (Europe/Warsaw) - synchronizacja match logs
+- **Stats sync**: Czwartek i Niedziela o 23:00 (Europe/Warsaw) - synchronizacja statystyk
+- **Match logs sync**: Czwartek i Niedziela o 23:00 (Top 8 lig), Niedziela o 23:00 (niższe ligi)
+- **Cache cleanup**: Codziennie o 03:00 - czyszczenie expired cache
+- **Quota monitoring**: Codziennie o 12:00 - monitoring użycia API
 
 **Email notifications:**
 - Automatyczne HTML raporty po każdej synchronizacji
 - Konfiguracja w `.env`: `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_TO`
-- Zobacz: [EMAIL_SETUP_GUIDE.md](../../EMAIL_SETUP_GUIDE.md)
 
 ## 🧪 Testowanie API
 
@@ -447,19 +470,16 @@ Invoke-RestMethod "http://127.0.0.1:8000/health"
 alembic upgrade head
 ```
 
-### Brak Playwright/Chromium
-```powershell
-python -m playwright install chromium
-```
-
 ## 📚 Technologie
 
 - **FastAPI** - nowoczesny framework webowy
 - **SQLAlchemy 2.0+** - ORM do pracy z bazą danych
 - **Pydantic** - walidacja danych i schemas
-- **Playwright** - automatyzacja przeglądarki do scrapingu
 - **APScheduler** - scheduler do automatycznych zadań
 - **PostgreSQL (Supabase)** - baza danych produkcyjna (darmowe 500MB)
 - **Alembic** - migracje bazy danych
+- **RapidAPI Football API** - źródło danych piłkarskich
+- **Caching Layer** - wielowarstwowy cache dla optymalizacji zapytań API
+- **Rate Limiter** - monitorowanie użycia API (100 requestów/miesiąc)
 
 

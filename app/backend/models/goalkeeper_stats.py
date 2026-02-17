@@ -41,6 +41,9 @@ class GoalkeeperStats(Base):
     penalties_missed = Column(Integer, default=0)
     
     post_shot_xg = Column(Float, default=0.0)
+
+    # Data source: 'rapidapi'
+    data_source = Column(String, nullable=False, default='rapidapi', index=True)
     
     # Relacje
     player = relationship("Player", back_populates="goalkeeper_stats")

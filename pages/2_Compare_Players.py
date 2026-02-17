@@ -360,7 +360,7 @@ if st.button("Compare Players"):
                     break
             
             if has_na:
-                st.info("ℹ️ Some statistics show 'N/A' - this means data is not available from FBref.")
+                st.info("ℹ️ Some statistics show 'N/A' - this means data is not available from RapidAPI.")
             
             radar_fig = create_radar_chart(comparison['player1'], comparison['player2'], selected_stats)
             bar_fig = create_bar_chart(comparison['player1'], comparison['player2'], selected_stats)
@@ -387,22 +387,19 @@ if st.button("Compare Players"):
             st.dataframe(df_compare, width='stretch')
 
 # ========================================
-# FOOTER - FBref Attribution
+# FOOTER - Data Source Attribution
 # ========================================
 st.divider()
 st.markdown("""
 <div style='text-align: center; padding: 2rem 0 1rem 0; color: #8A8A8A; font-size: 0.875rem;'>
     <p style='margin-bottom: 0.5rem;'>
-        📊 <strong>Data Source:</strong> 
-        <a href='https://fbref.com/' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
-            FBref.com
-        </a> (Sports Reference LLC)
-    </p>
-    <p style='font-size: 0.75rem; color: #B8B8B8; margin-bottom: 0.5rem;'>
-        Player statistics powered by FBref - The leading source for football statistics
+        📊 <strong>Data Source:</strong>
+        <a href='https://rapidapi.com/creativesdev/api/free-api-live-football-data' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
+            RapidAPI Football API
+        </a> (free-api-live-football-data)
     </p>
     <p style='font-size: 0.7rem; color: #6A6A6A; margin-bottom: 0;'>
-        Polish Football Players Abroad is an independent project and is not affiliated with FBref.com
+        Polish Football Players Abroad is an independent project for educational purposes
     </p>
 </div>
 """, unsafe_allow_html=True)

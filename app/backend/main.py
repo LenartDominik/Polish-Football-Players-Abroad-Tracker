@@ -8,6 +8,7 @@ from collections import defaultdict
 
 # --- Biblioteki zewnętrzne ---
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Query
+from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy import extract
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -17,7 +18,7 @@ from .config import settings
 from .database import engine, Base, SessionLocal
 
 # --- Routery i Serwisy ---
-from .routers import players, comparison, matchlogs
+from .routers import players, comparison, matchlogs, live, leaderboard
 from .services.rapidapi_client import RapidAPIClient
 from .services.data_mapper import (
     map_player_data,
@@ -26,13 +27,18 @@ from .services.data_mapper import (
     map_match_logs_from_fixtures,
     normalize_season_for_api
 )
+from .services.match_logs_sync import sync_all_match_logs
+from .services.cache_manager import CacheManager
+from .services.rate_limiter import RateLimiter
 
 # --- Modele Bazy Danych ---
 from .models.player import Player
 from .models.competition_stats import CompetitionStats, CompetitionType
 from .models.goalkeeper_stats import GoalkeeperStats
 from .models.player_match import PlayerMatch
-from .utils import get_competition_type
+from .models.cache_store import CacheStore
+from .models.api_usage_metrics import ApiUsageMetrics
+from .utils import get_competition_type, handle_api_error
 
 
 logger = logging.getLogger(__name__)
@@ -83,7 +89,8 @@ async def sync_single_player_api(client: RapidAPIClient, player_info: dict, curr
             # Find our player in team roster
             player_data = None
             for p in team_data:
-                if p.get('player', {}).get('id') == rapidapi_player_id:
+                # Team squad data is flat - id is at top level, not nested under 'player'
+                if p.get('id') == rapidapi_player_id:
                     player_data = p
                     break
 
@@ -120,22 +127,25 @@ async def sync_single_player_api(client: RapidAPIClient, player_info: dict, curr
             player.last_updated = date.today()
 
             # Get competition stats from API response
-            # Format: player_data['statistics'][i]['games'] contains stats for each competition
+            # Handle two formats:
+            # 1. NESTED (player_detail): {statistics: [{league: {name: ...}, games: {...}}]}
+            # 2. FLAT (team_squad): {goals, assists, ycards, rcards, rating, ...} - aggregated stats
+            stats_saved = 0
+
+            # Delete old competition stats for this season
+            db.query(CompetitionStats).filter(
+                CompetitionStats.player_id == player_id,
+                CompetitionStats.season == current_season
+            ).delete(synchronize_session=False)
+
+            db.query(GoalkeeperStats).filter(
+                GoalkeeperStats.player_id == player_id,
+                GoalkeeperStats.season == current_season
+            ).delete(synchronize_session=False)
+
+            # Check if nested statistics array exists (player_detail format)
             if 'statistics' in player_data and isinstance(player_data['statistics'], list):
-                stats_saved = 0
-
-                # Delete old competition stats for this season
-                db.query(CompetitionStats).filter(
-                    CompetitionStats.player_id == player_id,
-                    CompetitionStats.season == current_season
-                ).delete(synchronize_session=False)
-
-                db.query(GoalkeeperStats).filter(
-                    GoalkeeperStats.player_id == player_id,
-                    GoalkeeperStats.season == current_season
-                ).delete(synchronize_session=False)
-
-                # Create new stats entries
+                # Create new stats entries for each competition
                 for stat_entry in player_data['statistics']:
                     league_info = stat_entry.get('league', {})
                     competition_name = league_info.get('name', 'Unknown')
@@ -147,7 +157,6 @@ async def sync_single_player_api(client: RapidAPIClient, player_info: dict, curr
 
                     # Check if goalkeeper
                     if player.is_goalkeeper:
-                        # Note: Goalkeeper stats may need team data for clean sheets
                         gk_stat = map_goalkeeper_stats(
                             {'statistics': [stat_entry]},
                             None,
@@ -171,6 +180,49 @@ async def sync_single_player_api(client: RapidAPIClient, player_info: dict, curr
                             db.add(comp_stat)
                             stats_saved += 1
 
+            # FLAT structure (team_squad format) - aggregated stats at top level
+            # Create single competition stats entry using player's league
+            elif 'goals' in player_data or 'assists' in player_data:
+                # Use player's league as competition name (from Player model)
+                competition_name = player.league or 'Unknown'
+                competition_type = get_competition_type(competition_name)
+
+                # Check if goalkeeper
+                if player.is_goalkeeper:
+                    # Map flat stats to goalkeeper format
+                    gk_stat = GoalkeeperStats(
+                        player_id=player_id,
+                        season=current_season,
+                        competition_name=competition_name,
+                        competition_type=competition_type,
+                        games=int(player_data.get('games', 0) or 0),
+                        games_starts=int(player_data.get('lineups', 0) or player_data.get('games_starts', 0) or 0),
+                        minutes=int(player_data.get('minutes', 0) or 0),
+                        goals_against=int(player_data.get('conceded', 0) or player_data.get('goals_against', 0) or 0),
+                        saves=int(player_data.get('saves', 0) or 0),
+                        clean_sheets=int(player_data.get('cleansheets', 0) or player_data.get('clean_sheets', 0) or 0),
+                    )
+                    db.add(gk_stat)
+                    stats_saved += 1
+                else:
+                    # Map flat stats to competition stats format
+                    comp_stat = CompetitionStats(
+                        player_id=player_id,
+                        season=current_season,
+                        competition_name=competition_name,
+                        competition_type=competition_type,
+                        games=int(player_data.get('games', 0) or player_data.get('appearances', 0) or 0),
+                        games_starts=int(player_data.get('lineups', 0) or player_data.get('games_starts', 0) or 0),
+                        minutes=int(player_data.get('minutes', 0) or 0),
+                        goals=int(player_data.get('goals', 0) or 0),
+                        assists=int(player_data.get('assists', 0) or 0),
+                        yellow_cards=int(player_data.get('ycards', 0) or player_data.get('yellowcards', 0) or 0),
+                        red_cards=int(player_data.get('rcards', 0) or player_data.get('redcards', 0) or 0),
+                    )
+                    db.add(comp_stat)
+                    stats_saved += 1
+
+            if stats_saved > 0:
                 logger.info(f"  ✅ Saved {stats_saved} competition stats for {player_name}")
 
             db.commit()
@@ -347,9 +399,10 @@ async def scheduled_sync_all_players_api():
                         player_name = player_info['name']
 
                         # Find this player in team data
+                        # Team squad data is flat - id is at top level, not nested
                         player_data = None
                         for p in team_data:
-                            if p.get('player', {}).get('id') == player_info.get('rapidapi_player_id'):
+                            if p.get('id') == player_info.get('rapidapi_player_id'):
                                 player_data = p
                                 break
 
@@ -415,6 +468,169 @@ async def scheduled_sync_all_players_api():
         logger.error(f"❌ Scheduled API sync failed: {e}", exc_info=True)
 
 
+# ============================================================================
+# NEW SCHEDULER JOBS - Match Logs, Cache, Quota
+# ============================================================================
+
+async def scheduled_match_logs_sync_level_1():
+    """
+    Scheduled task to sync player match logs for Level 1 players (Top 8 leagues).
+    Runs Thursday & Sunday at 23:00.
+
+    Syncs player_matches table from RapidAPI lineups.
+    """
+    start_time = datetime.now()
+
+    logger.info("=" * 60)
+    logger.info("📋 MATCH LOGS SYNC - Level 1 (Top 8 Leagues)")
+    logger.info(f"⏰ Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 60)
+
+    db = SessionLocal()
+    try:
+        results = await sync_all_match_logs(db, level=1)
+
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds() / 60
+
+        logger.info("=" * 60)
+        logger.info("✅ MATCH LOGS SYNC COMPLETE (Level 1)")
+        logger.info(f"📊 Results: +{results['added']} ~{results['updated']} ={results['skipped']} !{results['errors']}")
+        logger.info(f"⏱️ Duration: {duration:.1f} minutes")
+        logger.info("=" * 60)
+
+    except Exception as e:
+        logger.error(f"❌ Match logs sync failed: {e}", exc_info=True)
+    finally:
+        db.close()
+
+
+async def scheduled_match_logs_sync_level_2():
+    """
+    Scheduled task to sync player match logs for Level 2 players (Lower leagues).
+    Runs Sunday at 23:00.
+
+    Syncs player_matches table from RapidAPI lineups.
+    """
+    start_time = datetime.now()
+
+    logger.info("=" * 60)
+    logger.info("📋 MATCH LOGS SYNC - Level 2 (Lower Leagues)")
+    logger.info(f"⏰ Time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 60)
+
+    db = SessionLocal()
+    try:
+        results = await sync_all_match_logs(db, level=2)
+
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds() / 60
+
+        logger.info("=" * 60)
+        logger.info("✅ MATCH LOGS SYNC COMPLETE (Level 2)")
+        logger.info(f"📊 Results: +{results['added']} ~{results['updated']} ={results['skipped']} !{results['errors']}")
+        logger.info(f"⏱️ Duration: {duration:.1f} minutes")
+        logger.info("=" * 60)
+
+    except Exception as e:
+        logger.error(f"❌ Match logs sync failed: {e}", exc_info=True)
+    finally:
+        db.close()
+
+
+async def scheduled_cache_cleanup():
+    """
+    Scheduled task to clean up expired cache entries.
+    Runs daily at 03:00.
+
+    Removes expired entries from cache_store table.
+    """
+    logger.info("=" * 60)
+    logger.info("🧹 CACHE CLEANUP - Starting")
+    logger.info(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 60)
+
+    db = SessionLocal()
+    try:
+        cache_manager = CacheManager(db)
+
+        # Get stats before cleanup
+        stats_before = cache_manager.get_stats()
+
+        # Clean up expired entries
+        removed = cache_manager.cleanup_expired()
+
+        # Get stats after cleanup
+        stats_after = cache_manager.get_stats()
+
+        logger.info(f"✅ CACHE CLEANUP COMPLETE")
+        logger.info(f"📊 Removed: {removed} expired entries")
+        logger.info(f"📊 Cache size: {stats_before['cache_size']} → {stats_after['cache_size']}")
+
+        # Also clean up old API usage metrics (keep 90 days)
+        rate_limiter = RateLimiter(db)
+        metrics_removed = rate_limiter.cleanup_old_metrics(days_to_keep=90)
+
+        if metrics_removed > 0:
+            logger.info(f"📊 Removed: {metrics_removed} old API usage metrics entries")
+
+        logger.info("=" * 60)
+
+    except Exception as e:
+        logger.error(f"❌ Cache cleanup failed: {e}", exc_info=True)
+    finally:
+        db.close()
+
+
+async def scheduled_quota_check():
+    """
+    Scheduled task to check API quota usage and send alerts.
+    Runs daily at 12:00.
+
+    Checks daily and monthly usage against quotas.
+    """
+    logger.info("=" * 60)
+    logger.info("📊 QUOTA CHECK - Starting")
+    logger.info(f"⏰ Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 60)
+
+    db = SessionLocal()
+    try:
+        rate_limiter = RateLimiter(db)
+
+        # Get full usage report
+        report = rate_limiter.get_full_report()
+
+        logger.info(f"📊 Daily Usage: {report['daily']['requests']}/{report['daily']['quota']} "
+                   f"({report['daily']['percentage']}%)")
+        logger.info(f"📊 Monthly Usage: {report['monthly']['requests']}/{report['monthly']['quota']} "
+                   f"({report['monthly']['percentage']}%)")
+
+        # Log usage by endpoint
+        by_endpoint = report.get('by_endpoint', {})
+        if by_endpoint:
+            logger.info("📊 Usage by endpoint:")
+            for endpoint, count in sorted(by_endpoint.items(), key=lambda x: x[1], reverse=True):
+                logger.info(f"   - {endpoint or 'other'}: {count} requests")
+
+        # Check if alerts needed
+        daily_pct = report['daily']['percentage']
+        monthly_pct = report['monthly']['percentage']
+
+        if daily_pct >= 80:
+            logger.warning(f"⚠️ DAILY QUOTA ALERT: {daily_pct}% used!")
+
+        if monthly_pct >= 90:
+            logger.error(f"🚨 MONTHLY QUOTA CRITICAL: {monthly_pct}% used!")
+
+        logger.info("=" * 60)
+
+    except Exception as e:
+        logger.error(f"❌ Quota check failed: {e}", exc_info=True)
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global scheduler
@@ -444,6 +660,52 @@ async def lifespan(app: FastAPI):
         logger.info("✅ RapidAPI sync configured:")
         logger.info(f"   📅 Schedule: Thursday & Sunday at 23:00 ({timezone_str})")
         logger.info(f"   📊 Level 1 (Top 8 leagues): 2x/week, Level 2 (Lower): 1x/week (Sunday)")
+
+        # NEW: Match logs sync - Level 1 (Top 8 leagues) - Thu & Sun at 23:00
+        scheduler.add_job(
+            scheduled_match_logs_sync_level_1,
+            CronTrigger(day_of_week='thu,sun', hour=23, minute=0, timezone=timezone_str),
+            id='match_logs_sync_level_1',
+            name='Sync Level 1 match logs (Top 8 leagues)',
+            replace_existing=True
+        )
+        logger.info("✅ Match logs sync (Level 1) configured:")
+        logger.info(f"   📅 Schedule: Thursday & Sunday at 23:00 ({timezone_str})")
+        logger.info(f"   📊 Top 8 leagues only")
+
+        # NEW: Match logs sync - Level 2 (Lower leagues) - Sunday at 23:00
+        scheduler.add_job(
+            scheduled_match_logs_sync_level_2,
+            CronTrigger(day_of_week='sun', hour=23, minute=0, timezone=timezone_str),
+            id='match_logs_sync_level_2',
+            name='Sync Level 2 match logs (Lower leagues)',
+            replace_existing=True
+        )
+        logger.info("✅ Match logs sync (Level 2) configured:")
+        logger.info(f"   📅 Schedule: Sunday at 23:00 ({timezone_str})")
+        logger.info(f"   📊 Lower leagues only")
+
+        # NEW: Cache cleanup - Daily at 03:00
+        scheduler.add_job(
+            scheduled_cache_cleanup,
+            CronTrigger(hour=3, minute=0, timezone=timezone_str),
+            id='cache_cleanup',
+            name='Clean up expired cache entries',
+            replace_existing=True
+        )
+        logger.info("✅ Cache cleanup configured:")
+        logger.info(f"   📅 Schedule: Daily at 03:00 ({timezone_str})")
+
+        # NEW: Quota check - Daily at 12:00
+        scheduler.add_job(
+            scheduled_quota_check,
+            CronTrigger(hour=12, minute=0, timezone=timezone_str),
+            id='quota_check',
+            name='Check API quota usage',
+            replace_existing=True
+        )
+        logger.info("✅ Quota check configured:")
+        logger.info(f"   📅 Schedule: Daily at 12:00 ({timezone_str})")
 
         scheduler.start()
         logger.info("✅ Scheduler uruchomiony")
@@ -532,6 +794,9 @@ app = FastAPI(
     },
 )
 
+# Add GZip compression middleware for responses >= 1KB
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 @app.get("/", tags=["Root"])
 def root():
     """
@@ -566,8 +831,20 @@ def root():
         },
         "scheduler": {
             "enabled": os.getenv("ENABLE_SCHEDULER", "false").lower() == "true",
-            "sync_schedule": "Thursday & Sunday at 23:00 (Europe/Warsaw) - Level 1: 2x/week, Level 2: 1x/week",
-            "next_sync": str(scheduler.get_job('sync_all_players_api').next_run_time) if scheduler and scheduler.running and scheduler.get_job('sync_all_players_api') else "Scheduler disabled"
+            "jobs": {
+                "player_stats_sync": "Thursday & Sunday at 23:00 (Level 1: 2x/week, Level 2: 1x/week)",
+                "match_logs_sync_level_1": "Thursday & Sunday at 23:00 (Top 8 leagues)",
+                "match_logs_sync_level_2": "Sunday at 23:00 (Lower leagues)",
+                "cache_cleanup": "Daily at 03:00",
+                "quota_check": "Daily at 12:00"
+            },
+            "next_runs": {
+                "player_stats_sync": str(scheduler.get_job('sync_all_players_api').next_run_time) if scheduler and scheduler.running and scheduler.get_job('sync_all_players_api') else "N/A",
+                "match_logs_sync_level_1": str(scheduler.get_job('match_logs_sync_level_1').next_run_time) if scheduler and scheduler.running and scheduler.get_job('match_logs_sync_level_1') else "N/A",
+                "match_logs_sync_level_2": str(scheduler.get_job('match_logs_sync_level_2').next_run_time) if scheduler and scheduler.running and scheduler.get_job('match_logs_sync_level_2') else "N/A",
+                "cache_cleanup": str(scheduler.get_job('cache_cleanup').next_run_time) if scheduler and scheduler.running and scheduler.get_job('cache_cleanup') else "N/A",
+                "quota_check": str(scheduler.get_job('quota_check').next_run_time) if scheduler and scheduler.running and scheduler.get_job('quota_check') else "N/A"
+            }
         },
         "links": {
             "github": "https://github.com/LenartDominik/Polish-Football-Players-Abroad",
@@ -633,9 +910,14 @@ async def search_and_update_player(player_id: int, search_name: str = Query(None
                 )
 
             # Try to find exact match
+            # API returns flat structure: {id, teamId, teamName, name, ...}
             exact_match = None
             for result in results:
-                result_name = result.get("player", {}).get("name", "")
+                # Try flat structure first (RapidAPI actual response)
+                result_name = result.get("name", "")
+                if not result_name:
+                    # Fallback to nested structure for compatibility
+                    result_name = result.get("player", {}).get("name", "")
                 if result_name.lower() == name_to_search.lower():
                     exact_match = result
                     break
@@ -643,13 +925,12 @@ async def search_and_update_player(player_id: int, search_name: str = Query(None
             # If no exact match, return first result
             chosen = exact_match or results[0]
 
-            # Extract IDs from result
-            player_info = chosen.get("player", {})
-            team_info = chosen.get("statistics", [{}])[0].get("team", {}) if chosen.get("statistics") else {}
-
-            rapidapi_player_id = player_info.get("id")
-            rapidapi_team_id = team_info.get("id")
-            team_name = team_info.get("name")
+            # Extract IDs from result - handle both flat and nested structures
+            # Flat structure: {id, teamId, teamName, name}
+            # Nested structure: {player: {id}, statistics: [{team: {id, name}}]}
+            rapidapi_player_id = chosen.get("id") or chosen.get("player", {}).get("id")
+            rapidapi_team_id = chosen.get("teamId") or chosen.get("statistics", [{}])[0].get("team", {}).get("id")
+            team_name = chosen.get("teamName") or chosen.get("statistics", [{}])[0].get("team", {}).get("name")
 
             if not rapidapi_player_id:
                 raise HTTPException(
@@ -757,3 +1038,7 @@ async def sync_all_players_endpoint():
 app.include_router(players.router, prefix="/api")
 app.include_router(comparison.router, prefix="/api")
 app.include_router(matchlogs.router, prefix="/api")
+app.include_router(live.router, prefix="/api")
+app.include_router(leaderboard.router)  # Already has /api/leaderboard prefix
+
+# Force reload trigger - 2026-02-17 00:35

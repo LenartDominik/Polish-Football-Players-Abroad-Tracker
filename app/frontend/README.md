@@ -6,7 +6,7 @@
 
 **This application is for EDUCATIONAL and NON-COMMERCIAL use only.**
 
-- **Data Source:** FBref.com (© Sports Reference LLC)
+- **Data Source:** RapidAPI Football API (free-api-live-football-data)
 - **Usage:** Portfolio, CV, education
 - **NOT for commercial use** without proper licensing
 - **See:** [LEGAL_NOTICE.md](../../docs/LEGAL_NOTICE.md) in root directory

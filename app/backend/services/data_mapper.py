@@ -43,6 +43,10 @@ def map_player_data(api_response: Dict, db_player: Player = None) -> Dict:
     """
     Convert RapidAPI player data to Player model attributes
 
+    Handles both response formats:
+    - NESTED (player_detail): {player: {name, id, ...}, statistics: [{team: {...}, league: {...}}]}
+    - FLAT (team_squad): {id, name, teamId, teamName, position, goals, assists, ...}
+
     Args:
         api_response: Raw API response for a player
         db_player: Existing Player instance to update (optional)
@@ -55,30 +59,48 @@ def map_player_data(api_response: Dict, db_player: Player = None) -> Dict:
 
     mapped = {}
 
-    # Basic info
-    if "player" in api_response:
+    # Check for FLAT structure first (team_squad response)
+    # Flat structure has id/name at top level
+    if "id" in api_response and "name" in api_response:
+        mapped["name"] = api_response.get("name")
+        mapped["rapidapi_player_id"] = api_response.get("id")
+
+        # Team info from flat structure
+        if "teamId" in api_response:
+            mapped["rapidapi_team_id"] = api_response.get("teamId")
+        if "teamName" in api_response:
+            mapped["team"] = api_response.get("teamName")
+
+        # Position from flat structure
+        if "position" in api_response:
+            pos = api_response.get("position", "").upper()
+            # Normalize position names
+            if "GOALKEEPER" in pos or pos == "GK":
+                mapped["position"] = "GK"
+            elif "DEFENDER" in pos or pos == "DF" or pos == "D":
+                mapped["position"] = "DF"
+            elif "MIDFIELDER" in pos or pos == "MF" or pos == "M":
+                mapped["position"] = "MF"
+            elif "FORWARD" in pos or pos == "FW" or pos == "F" or "ATTACK" in pos:
+                mapped["position"] = "FW"
+
+    # NESTED structure (player_detail response)
+    elif "player" in api_response:
         player_data = api_response["player"]
         mapped["name"] = player_data.get("name") or player_data.get("firstname", "") + " " + player_data.get("lastname", "")
         mapped["rapidapi_player_id"] = player_data.get("id")
         mapped["position"] = player_data.get("position")  # GK, DF, MF, FW
         mapped["nationality"] = player_data.get("nationality")
 
-    # Team info
+    # Team info from nested statistics
     if "statistics" in api_response and len(api_response["statistics"]) > 0:
         stats = api_response["statistics"][0]
-        mapped["team"] = stats.get("team", {}).get("name")
-        mapped["rapidapi_team_id"] = stats.get("team", {}).get("id")
-        mapped["league"] = stats.get("league", {}).get("name")
-
-    # For team squad response format
-    elif "player" not in api_response:
-        mapped["name"] = api_response.get("name") or api_response.get("player", {}).get("name")
-        mapped["rapidapi_player_id"] = api_response.get("id") or api_response.get("player", {}).get("id")
-
-        team_info = api_response.get("statistics", [{}])[0] if "statistics" in api_response else {}
-        if not team_info and "team" in api_response:
-            mapped["team"] = api_response["team"].get("name")
-            mapped["rapidapi_team_id"] = api_response["team"].get("id")
+        if "team" not in mapped or not mapped.get("team"):
+            mapped["team"] = stats.get("team", {}).get("name")
+        if "rapidapi_team_id" not in mapped or not mapped.get("rapidapi_team_id"):
+            mapped["rapidapi_team_id"] = stats.get("team", {}).get("id")
+        if "league" not in mapped:
+            mapped["league"] = stats.get("league", {}).get("name")
 
     mapped["last_updated"] = date.today()
 
@@ -96,6 +118,10 @@ def map_competition_stats(
     """
     Convert RapidAPI stats to CompetitionStats model
 
+    Handles two response formats:
+    - NESTED: {statistics: [{league: {name: ...}, games: {...}}]}
+    - FLAT: {goals, assists, ycards, rcards, rating, games, minutes, ...}
+
     Args:
         api_response: API response with player statistics
         player_id: Database player ID
@@ -112,7 +138,7 @@ def map_competition_stats(
     # Extract stats from API response
     stats_data = None
 
-    # Handle different response formats
+    # Handle NESTED format: {statistics: [{league: {name: ...}, games: {...}}]}
     if "statistics" in api_response and isinstance(api_response["statistics"], list):
         # Find stats for the requested competition
         for stats in api_response["statistics"]:
@@ -124,37 +150,42 @@ def map_competition_stats(
     elif "games" in api_response:
         stats_data = api_response["games"]
 
+    # Handle FLAT format: stats directly on api_response
+    # If no stats_data found and we have flat stats, use the api_response directly
+    if not stats_data and ('goals' in api_response or 'assists' in api_response or 'games' in api_response):
+        stats_data = api_response
+
     if not stats_data:
         # Create minimal stats if no data found
         stats_data = {}
 
-    # Map fields
+    # Map fields - support both flat and nested formats
     comp_stats = CompetitionStats(
         player_id=player_id,
         season=season,
         competition_name=competition_name,
         competition_type=competition_type or get_competition_type(competition_name),
 
-        # Basic stats
-        games=int(stats_data.get("appeances", 0) or stats_data.get("games", 0) or 0),
-        games_starts=int(stats_data.get("lineups", 0) or 0),  # lineups as proxy for starts
+        # Basic stats - try flat keys first, then nested
+        games=int(stats_data.get("games", 0) or stats_data.get("appearances", 0) or 0),
+        games_starts=int(stats_data.get("games_starts", 0) or stats_data.get("lineups", 0) or 0),
         minutes=int(stats_data.get("minutes", 0) or 0),
 
         # Attack stats
-        goals=int(stats_data.get("goals", 0) or stats_data.get("goals", {}).get("total", 0) or 0),
-        assists=int(stats_data.get("goals", 0) or stats_data.get("assists", 0) or 0),
+        goals=int(stats_data.get("goals", 0) or 0),
+        assists=int(stats_data.get("assists", 0) or 0),
 
-        # Cards
-        yellow_cards=int(stats_data.get("yellowcards", 0) or stats_data.get("cards", {}).get("yellow", 0) or 0),
-        red_cards=int(stats_data.get("redcards", 0) or stats_data.get("cards", {}).get("red", 0) or 0),
+        # Cards - support multiple key names
+        yellow_cards=int(stats_data.get("yellow_cards", 0) or stats_data.get("ycards", 0) or stats_data.get("yellowcards", 0) or 0),
+        red_cards=int(stats_data.get("red_cards", 0) or stats_data.get("rcards", 0) or stats_data.get("redcards", 0) or 0),
 
-        # Shots
-        shots=int(stats_data.get("shots", {}).get("total", 0) or 0),
-        shots_on_target=int(stats_data.get("shots", {}).get("on", 0) or 0),
+        # Shots (may not be in flat format)
+        shots=int(stats_data.get("shots", 0) or stats_data.get("shots", {}).get("total", 0) or 0),
+        shots_on_target=int(stats_data.get("shots_on_target", 0) or stats_data.get("shots", {}).get("on", 0) or 0),
 
-        # Pass stats
-        passes_attempted=int(stats_data.get("passes", {}).get("total", 0) or 0),
-        passes_completed=int(stats_data.get("passes", {}).get("accuracy", 0) or 0),
+        # Pass stats (may not be in flat format)
+        passes_attempted=int(stats_data.get("passes_attempted", 0) or stats_data.get("passes", {}).get("total", 0) or 0),
+        passes_completed=int(stats_data.get("passes_completed", 0) or stats_data.get("passes", {}).get("accuracy", 0) or 0),
     )
 
     # Calculate pass completion percentage
@@ -181,6 +212,10 @@ def map_goalkeeper_stats(
     """
     Convert RapidAPI stats to GoalkeeperStats model
 
+    Handles two response formats:
+    - NESTED: {statistics: [{league: {name: ...}, games: {...}, goals: {...}}]}
+    - FLAT: {goals, assists, ycards, rcards, saves, cleansheets, conceded, ...}
+
     Note: RapidAPI may not provide all GK stats. Use team_stats_response
     to calculate clean sheets and goals against from team data.
 
@@ -200,7 +235,7 @@ def map_goalkeeper_stats(
 
     stats_data = {}
 
-    # Extract stats from API response
+    # Handle NESTED format
     if "statistics" in api_response and isinstance(api_response["statistics"], list):
         for stats in api_response["statistics"]:
             league_name = stats.get("league", {}).get("name", "")
@@ -214,6 +249,10 @@ def map_goalkeeper_stats(
     elif "games" in api_response:
         stats_data = api_response["games"]
 
+    # Handle FLAT format - stats directly on api_response
+    if not stats_data and ('goals' in api_response or 'saves' in api_response or 'cleansheets' in api_response):
+        stats_data = api_response
+
     # Build goalkeeper stats
     gk_stats = GoalkeeperStats(
         player_id=player_id,
@@ -221,13 +260,13 @@ def map_goalkeeper_stats(
         competition_name=competition_name,
         competition_type=competition_type or get_competition_type(competition_name),
 
-        # Games and minutes
-        games=int(stats_data.get("appeances", 0) or stats_data.get("games", 0) or 0),
-        games_starts=int(stats_data.get("lineups", 0) or 0),
+        # Games and minutes - support multiple key names
+        games=int(stats_data.get("games", 0) or stats_data.get("appearances", 0) or 0),
+        games_starts=int(stats_data.get("games_starts", 0) or stats_data.get("lineups", 0) or 0),
         minutes=int(stats_data.get("minutes", 0) or 0),
 
-        # Goals conceded
-        goals_against=int(stats_data.get("conceded", 0) or stats_data.get("goals", {}).get("conceded", 0) or 0),
+        # Goals conceded - support multiple key names
+        goals_against=int(stats_data.get("goals_against", 0) or stats_data.get("conceded", 0) or 0),
     )
 
     # Calculate goals against per 90
@@ -237,7 +276,6 @@ def map_goalkeeper_stats(
     # Use team stats to calculate clean sheets if not provided
     if team_stats_response:
         # Calculate clean sheets from team clean sheets data
-        # This is an approximation - assumes GK played all matches with clean sheets
         team_clean_sheets = team_stats_response.get("clean_sheet", {}).get("total", 0) or 0
         gk_stats.clean_sheets = min(team_clean_sheets, gk_stats.games)
 
@@ -252,9 +290,9 @@ def map_goalkeeper_stats(
             total_shots = gk_stats.saves + gk_stats.goals_against
             gk_stats.save_percentage = round((gk_stats.saves / total_shots) * 100, 2) if total_shots > 0 else 0.0
     else:
-        # Use direct stats if available
+        # Use direct stats if available - support multiple key names
         gk_stats.saves = int(stats_data.get("saves", 0) or 0)
-        gk_stats.clean_sheets = int(stats_data.get("cleansheets", 0) or stats_data.get("clean_sheet", 0) or 0)
+        gk_stats.clean_sheets = int(stats_data.get("clean_sheets", 0) or stats_data.get("cleansheets", 0) or 0)
 
         # Save percentage
         if gk_stats.saves > 0:

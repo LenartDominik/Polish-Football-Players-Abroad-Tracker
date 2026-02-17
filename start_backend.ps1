@@ -2,7 +2,7 @@
 Write-Host "🚀 Uruchamianie Backend FastAPI..." -ForegroundColor Green
 Write-Host ""
 
-$projectPath = "e:\Python - Ready4 AI\polish-players-tracker"
+$projectPath = "E:\Polish Footballers Abroad Tracker\polish-players-tracker"
 $pythonExe = "$projectPath\.venv\Scripts\python.exe"
 
 # Zmień katalog

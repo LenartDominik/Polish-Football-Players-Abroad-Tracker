@@ -1,16 +1,16 @@
 # app/backend/models/player.py
+import logging
 from sqlalchemy import Column, Integer, String, Date
 from sqlalchemy.orm import relationship
 from ..database import Base
-from .season_stats import PlayerSeasonStats
-from .player_match import PlayerMatch
+
+logger = logging.getLogger(__name__)
 
 
 class Player(Base):
     __tablename__ = "players"
 
     id = Column(Integer, primary_key=True, index=True)
-    api_id = Column(String, unique=True, index=True, nullable=True)  # FBref ID (legacy)
     name = Column(String, index=True)
     team = Column(String)
     league = Column(String)
@@ -25,7 +25,10 @@ class Player(Base):
     # Competition level: 1 = Top leagues (2x/week sync), 2 = Lower leagues (1x/week sync)
     # Top leagues: Premier League, La Liga, Bundesliga, Serie A, Ligue 1, Eredivisie, Primeira Liga, Süper Lig
     level = Column(Integer, default=2, nullable=False)
-    
+
+    # Data source: 'rapidapi'
+    data_source = Column(String, nullable=False, default='rapidapi', index=True)
+
     # Relacje - istniejące
     season_stats = relationship(
         "PlayerSeasonStats", 

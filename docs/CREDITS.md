@@ -2,28 +2,26 @@
 
 ## Data Attribution
 
-### FBref.com (Sports Reference LLC)
+### RapidAPI Football API (free-api-live-football-data)
 
-This project would not be possible without **[FBref.com](https://fbref.com/)**, the premier source for football statistics and analytics.
+This project uses football statistics data from **[RapidAPI Football API](https://rapidapi.com/creativesdev/api/free-api-live-football-data)**.
 
-**What we use from FBref:**
+**What we use from RapidAPI:**
 - Player statistics database (goals, assists, xG, xA, minutes, shots, passes, etc.)
 - Match-by-match logs (detailed game-by-game performance)
 - Competition classifications (leagues, cups, international matches)
 - Goalkeeper-specific metrics (saves, clean sheets, goals against)
+- Live match data
 
 **License & Terms:**
-- Data is used in accordance with FBref's Terms of Service
+- Data is used in accordance with RapidAPI's Terms of Service
 - Non-commercial educational use
 - Attribution provided in UI, documentation, and API responses
-- Rate limiting applied (12 seconds between requests)
+- Rate limiting applied (100 requests/month free tier)
 
 **Official Links:**
-- Website: https://fbref.com/
-- About: https://fbref.com/en/about/
-- Twitter: [@fbref](https://twitter.com/fbref)
-
-**Support FBref:** If you find this data valuable, consider visiting FBref.com directly and supporting their work. They provide an invaluable service to the football community.
+- API: https://rapidapi.com/creativesdev/api/free-api-live-football-data
+- RapidAPI: https://rapidapi.com/
 
 ---
 

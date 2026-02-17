@@ -1,0 +1,10 @@
+# MCP Server Requirements for Polish Football Players Abroad Tracker
+
+# MCP SDK
+mcp>=0.9.0
+
+# HTTP client for API calls
+httpx>=0.27.0
+
+# Environment variables (optional - for .env file support, but not used for credentials)
+python-dotenv>=1.0.0

@@ -58,3 +58,31 @@ tmp_*
 **/secrets/
 **/credentials/
 
+
+# Claude Code / MCP
+.mcp.json
+mcp.memory.json
+.claude/
+
+# Environment files (API keys)
+.env
+.env.local
+*.env
+
+# Inne wrażliwe
+secrets.json
+credentials.json
+
+# Dev/debug scripts (DO NOT COMMIT)
+check_*.py
+debug_*.py
+test_*.py
+raw_sql_check.py
+backup_database.py
+batch_update_*.py
+smart_sync.py
+sync_all_polish.py
+sync_match_logs_rapidapi.py
+sync_rapidapi_manual.py
+sync_single_player.py
+setup_mcp_key.py

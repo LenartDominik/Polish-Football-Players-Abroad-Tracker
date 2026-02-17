@@ -2,28 +2,26 @@
 
 ## Atrybucja Danych
 
-### FBref.com (Sports Reference LLC)
+### RapidAPI Football API (free-api-live-football-data)
 
-Ten projekt nie byłby możliwy bez **[FBref.com](https://fbref.com/)**, wiodącego źródła statystyk i analiz piłkarskich.
+Ten projekt wykorzystuje dane statystyk piłkarskich z **[RapidAPI Football API](https://rapidapi.com/creativesdev/api/free-api-live-football-data)**.
 
-**Co wykorzystujemy z FBref:**
+**Co wykorzystujemy z RapidAPI:**
 - Baza statystyk graczy (gole, asysty, xG, xA, minuty, strzały, podania, itp.)
 - Logi meczowe (szczegółowe statystyki mecz po meczu)
 - Klasyfikacje rozgrywek (ligi, puchary, mecze międzynarodowe)
 - Metryki specyficzne dla bramkarzy (obrony, czyste konta, bramki stracone)
+- Dane meczów na żywo
 
 **Licencja i Warunki:**
-- Dane wykorzystywane zgodnie z Warunkami Użytkowania FBref
+- Dane wykorzystywane zgodnie z Regulaminem RapidAPI
 - Niekomercyjne użycie edukacyjne
 - Atrybucja zawarta w UI, dokumentacji i odpowiedziach API
-- Zastosowane ograniczenie częstotliwości (12 sekund między requestami)
+- Zastosowane ograniczenie częstotliwości (100 requestów/miesiąc)
 
 **Oficjalne Linki:**
-- Strona: https://fbref.com/
-- O nas: https://fbref.com/en/about/
-- Twitter: [@fbref](https://twitter.com/fbref)
-
-**Wspieraj FBref:** Jeśli te dane są dla Ciebie wartościowe, rozważ odwiedzenie FBref.com bezpośrednio i wsparcie ich pracy. Dostarczają nieocenioną usługę dla społeczności piłkarskiej.
+- API: https://rapidapi.com/creativesdev/api/free-api-live-football-data
+- RapidAPI: https://rapidapi.com/
 
 ---
 
@@ -36,7 +34,7 @@ Ten projekt zbudowany jest w oparciu o niesamowite technologie open source:
 **Backend:**
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern, fast web framework for building APIs
 - [SQLAlchemy](https://www.sqlalchemy.org/) - SQL toolkit and ORM
-- [Playwright](https://playwright.dev/) - Browser automation for web scraping
+- [httpx](https://www.python-httpx.org/) - Async HTTP client for API requests
 - [APScheduler](https://apscheduler.readthedocs.io/) - Advanced Python Scheduler
 - [Pydantic](https://pydantic-docs.helpmanual.io/) - Data validation using Python type annotations
 

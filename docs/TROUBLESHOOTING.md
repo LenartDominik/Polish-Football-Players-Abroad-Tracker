@@ -4,7 +4,7 @@
 
 ## 🎯 About This Project
 
-This automated platform uses **web scraping** (Playwright) to fetch player statistics from **fbref.com**, stores them in **PostgreSQL** (Supabase), serves data via **FastAPI** backend, and displays it through **Streamlit** frontend. The system includes automated synchronization, data validation, and email notifications.
+This automated platform uses **REST API** to fetch player statistics from **RapidAPI Football API**, stores them in **PostgreSQL** (Supabase), serves data via **FastAPI** backend, and displays it through **Streamlit** frontend. The system includes automated synchronization, data validation, and email notifications.
 
 ---
 
@@ -298,21 +298,21 @@ Free: 100 emails/day - https://sendgrid.com
 
 ### ❌ Problem: Sync fails with "Rate limit exceeded"
 
-**Cause:** Too many requests to FBref.com too quickly.
+**Cause:** Too many requests to RapidAPI too quickly.
 
 **Fix:**
-- Backend has built-in 12-second rate limiting (FBref ToS compliant)
+- Backend has built-in rate limiting (100 requests/month free tier)
 - This is normal and expected
-- Sync takes time: ~90 players × 12 seconds = ~18 minutes
+- Sync takes time due to rate limits
 - **Don't run multiple syncs simultaneously**
 
-### ❌ Problem: "Player not found on FBref"
+### ❌ Problem: "Player not found in RapidAPI"
 
-**Cause:** Player name doesn't match FBref exactly.
+**Cause:** Player ID not set in database.
 
 **Fix:**
-1. Check FBref.com for exact player name format
-2. Update player name in database
+1. Use search endpoint to find player RapidAPI ID
+2. Update player rapidapi_player_id and rapidapi_team_id in database
 3. Re-sync
 
 **Example:**

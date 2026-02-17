@@ -553,9 +553,9 @@ def load_data():
     """
     try:
         api_client = get_api_client()
-        
-        # Fetch only players (small payload)
-        players_df = api_client.get_all_players()
+
+        # Fetch all players (increase limit to get all)
+        players_df = api_client.get_all_players(limit=500)
         
         # FIX: Create DataFrames with explicit columns to prevent KeyError in filtering functions
         # This ensures that checks like "if 'player_id' in df" or "df['player_id']" work correctly even if empty.
@@ -594,20 +594,11 @@ def load_data():
 st.sidebar.header("🔎 Player Search")
 search_name = st.sidebar.text_input("Enter player name", placeholder="e.g. Lewandowski, Zieliński...")
 
-# If there is a search term, fetch filtered players from API (server-side filter), else use initial df
-api_client = get_api_client()
-if search_name and len(search_name.strip()) >= 1:
-    # Debounce-like behavior is limited in Streamlit; keep it simple
-    try:
-        df = api_client.get_all_players(name=search_name.strip(), limit=200)
-    except Exception:
-        pass
-
 # Optional filters
 st.sidebar.markdown("---")
 st.sidebar.subheader("🎛 Filters (Optional)")
 
-# Load data
+# Load data - always load fresh data first
 df, stats_df, comp_stats_df, gk_stats_df, matches_df = load_data()
 
 if df.empty:
@@ -628,9 +619,15 @@ selected_player_str = st.sidebar.selectbox("Player (optional)", players_list)
 # Apply filters
 filtered_df = df.copy()
 
-# Filtruj po nazwisku
+# Filtruj po nazwisku - use case-insensitive search that works with Polish characters
 if search_name:
-    filtered_df = filtered_df[filtered_df['name'].str.contains(search_name, case=False, na=False)]
+    import unicodedata
+    # Normalize both strings for comparison (handles Polish characters)
+    search_normalized = unicodedata.normalize('NFKD', search_name.lower())
+    filtered_df = filtered_df[
+        filtered_df['name'].apply(lambda x: unicodedata.normalize('NFKD', str(x).lower()) if x else '')
+        .str.contains(search_normalized, na=False)
+    ]
 
 # Filtruj po drużynie
 if selected_team != 'All':
@@ -650,21 +647,18 @@ if selected_player_str != 'All':
 if not search_name and selected_team == 'All' and selected_player_str == 'All':
     st.info("👆 Enter a player name, select a team, or choose a player to view statistics")
     
-    # Footer - FBref Attribution (pokazuj też na głównej stronie)
+    # Footer - Data Source Attribution
     st.divider()
     st.markdown("""
     <div style='text-align: center; padding: 2rem 0 1rem 0; color: #8A8A8A; font-size: 0.875rem;'>
         <p style='margin-bottom: 0.5rem;'>
-            📊 <strong>Data Source:</strong> 
-            <a href='https://fbref.com/' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
-                FBref.com
-            </a> (Sports Reference LLC)
-        </p>
-        <p style='font-size: 0.75rem; color: #B8B8B8; margin-bottom: 0.5rem;'>
-            Player statistics powered by FBref - The leading source for football statistics
+            📊 <strong>Data Source:</strong>
+            <a href='https://rapidapi.com/creativesdev/api/free-api-live-football-data' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
+                RapidAPI Football API
+            </a> (free-api-live-football-data)
         </p>
         <p style='font-size: 0.7rem; color: #6A6A6A; margin-bottom: 0;'>
-            Polish Football Players Abroad is an independent project and is not affiliated with FBref.com
+            Polish Football Players Abroad is an independent project for educational purposes
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -2214,22 +2208,19 @@ if st.sidebar.button("🔄 Refresh Data"):
     st.rerun()
 
 # ========================================
-# FOOTER - FBref Attribution
+# FOOTER - Data Source Attribution
 # ========================================
 st.divider()
 st.markdown("""
 <div style='text-align: center; padding: 2rem 0 1rem 0; color: #8A8A8A; font-size: 0.875rem;'>
     <p style='margin-bottom: 0.5rem;'>
-        📊 <strong>Data Source:</strong> 
-        <a href='https://fbref.com/' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
-            FBref.com
-        </a> (Sports Reference LLC)
-    </p>
-    <p style='font-size: 0.75rem; color: #B8B8B8; margin-bottom: 0.5rem;'>
-        Player statistics powered by FBref - The leading source for football statistics
+        📊 <strong>Data Source:</strong>
+        <a href='https://rapidapi.com/creativesdev/api/free-api-live-football-data' target='_blank' style='color: #4ECDC4; text-decoration: none;'>
+            RapidAPI Football API
+        </a> (free-api-live-football-data)
     </p>
     <p style='font-size: 0.7rem; color: #6A6A6A; margin-bottom: 0;'>
-        Polish Football Players Abroad is an independent project and is not affiliated with FBref.com
+        Polish Football Players Abroad is an independent project for educational purposes
     </p>
 </div>
 """, unsafe_allow_html=True)

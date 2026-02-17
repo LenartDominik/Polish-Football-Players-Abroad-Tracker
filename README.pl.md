@@ -6,14 +6,14 @@
 
 ## 🎯 Opis Projektu
 
-Projekt demonstruje wykorzystanie **web scrapingu** do regularnego pobierania i przetwarzania aktualnych statystyk piłkarzy z witryny **fbref.com**. Część backendowa oparta na **FastAPI** cyklicznie aktualizuje bazę danych, a frontend **Streamlit** pozwala na szybki podgląd danych w przyjaznej formie. Moja platforma jest oparta na mechanizmach automatyzujących pobieranie, walidację i prezentację danych.
+Projekt demonstruje wykorzystanie **REST API** do regularnego pobierania i przetwarzania aktualnych statystyk piłkarzy z **RapidAPI Football API**. Część backendowa oparta na **FastAPI** cyklicznie aktualizuje bazę danych, a frontend **Streamlit** pozwala na szybki podgląd danych w przyjaznej formie. Moja platforma jest oparta na mechanizmach automatyzujących pobieranie, walidację i prezentację danych.
 
 **Kluczowe Technologie i Techniki:**
-- 🕸️ **Web Scraping:** Playwright headless browser do ekstrakcji dynamicznej treści
+- 🌐 **REST API:** RapidAPI Football API do pobierania danych
 - 🔄 **Automatyzacja:** APScheduler do okresowej synchronizacji danych (2-3x/tydzień)
 - 🛡️ **Walidacja Danych:** Modele Pydantic dla bezpieczeństwa typów i walidacji schematów
 - 🗄️ **Database ORM:** SQLAlchemy 2.0+ z migracjami Alembic
-- 🔐 **Rate Limiting:** 12-sekundowe opóźnienia między requestami (zgodnie z FBref ToS)
+- 💾 **Caching:** Warstwy cache dla optymalizacji zapytań API
 - 📊 **Przetwarzanie Danych:** pandas do agregacji i transformacji statystyk
 - 🎨 **Interaktywna Wizualizacja:** Streamlit z wykresami Plotly
 - 🔗 **RESTful API:** FastAPI z automatycznie generowaną dokumentacją OpenAPI
@@ -35,7 +35,7 @@ Projekt demonstruje wykorzystanie **web scrapingu** do regularnego pobierania i 
 3. **Porównaj graczy** - Kliknij "Compare Players" w sidebarze aby porównać dwóch graczy
 4. **Eksportuj dane** - Pobierz przefiltrowane dane jako CSV do własnej analizy
 
-**📊 Aktualizacje danych:** Automatyczna synchronizacja 3x w tygodniu (poniedziałek, czwartek, wtorek) z FBref.com
+**📊 Aktualizacje danych:** Automatyczna synchronizacja 2x w tygodniu (czwartek, niedziela) z RapidAPI Football API
 
 ---
 
@@ -45,55 +45,60 @@ Projekt demonstruje wykorzystanie **web scrapingu** do regularnego pobierania i 
 
 **To jest projekt edukacyjny, niekomercyjny.**
 
-- **Źródło danych:** FBref.com (© Sports Reference LLC)
+- **Źródło danych:** RapidAPI Football API (free-api-live-football-data)
 - **Użycie:** Wyłącznie do celów edukacyjnych i portfolio
 - **NIE do użytku komercyjnego** bez odpowiedniej licencji
 - **Zobacz [docs/LEGAL_NOTICE.pl.md](docs/LEGAL_NOTICE.pl.md) dla pełnych szczegółów**
 
 ---
 
-Nowoczesny system do monitorowania polskich piłkarzy grających za granicą. Automatyczna synchronizacja statystyk z FBref.com z użyciem Playwright, zaawansowana analiza danych i interaktywny dashboard.
+Nowoczesny system do monitorowania polskich piłkarzy grających za granicą. Automatyczna synchronizacja statystyk z RapidAPI Football API, zaawansowana analiza danych i interaktywny dashboard.
 
 ## 📊 Data Source & Attribution
 
-All player statistics in this application are sourced from **[FBref.com](https://fbref.com/)** (Sports Reference LLC), the leading resource for football statistics worldwide.
+All player statistics in this application are sourced from **[RapidAPI Football API](https://rapidapi.com/creativesdev/api/free-api-live-football-data)** (free-api-live-football-data), providing professional football data worldwide.
 
-**What data comes from FBref:**
+**What data comes from RapidAPI:**
 - ⚽ Player statistics (goals, assists, xG, xA, minutes played)
 - 📋 Match logs (detailed game-by-game performance)
 - 🏆 Competition data (leagues, cups, international matches)
 - 🧤 Goalkeeper statistics (saves, clean sheets, goals against)
+- 🔴 Live matches and real-time updates
 
 **Our commitment to responsible data use:**
-- ✅ **Rate Limiting**: 12-second delay between requests (respects server load)
-- ✅ **Clear Attribution**: FBref credited throughout the application
+- ✅ **Rate Limiting**: Respects API quota (100 requests/month free tier)
+- ✅ **Efficient Caching**: Multi-layer cache reduces API calls
+- ✅ **Clear Attribution**: RapidAPI credited throughout the application
 - ✅ **Non-Commercial**: Educational/portfolio project
-- ✅ **Respectful Scraping**: Following best practices and Terms of Service
 
-**Disclaimer:** Polish Football Players Abroad is an independent project and is not affiliated with, endorsed by, or connected to FBref.com or Sports Reference LLC. For official statistics and in-depth analysis, please visit [FBref.com](https://fbref.com/).
+**Disclaimer:** Polish Football Players Abroad is an independent project and is not affiliated with, endorsed by, or connected to RapidAPI. For official statistics and in-depth analysis, please visit the RapidAPI Football API.
 
 ---
 
 ## ✨ Główne funkcjonalności
 
-### 🕸️ FBref Playwright Scraper
-- **Automatyczny scraping** danych z FBref.com używając Playwright (headless browser)
-- **Zaawansowane statystyki zawodników z pola**: mecze, gole, asysty, xG, xA, xGI, G+A/90, minuty, kartki
-- **Statystyki bramkarzy**: obrony, czyste konta, % obron, karne, PSxG (Post-Shot xG)
-- **Rate limiting**: 12s między requestami (bezpieczne dla ToS)
+### 🌐 RapidAPI Football Client
+- **Automatyczna synchronizacja** danych z RapidAPI Football API
+- **Zaawansowane statystyki zawodników z pola**: mecze, gole, asysty, xG, xA, minuty, kartki
+- **Statystyki bramkarzy**: obrony, czyste konta, % obron, karne
+- **Rate limiting**: Zgodne z limitem API (100 requestów/miesiąc)
 - **Rozbicie na rozgrywki**: Liga, Puchary Europejskie (LM/LE/LK), Reprezentacja (ROK KALENDARZOWY!), Puchary krajowe
 - **Match logs**: Szczegółowe statystyki meczowe dla każdego zawodnika
 - **Tracking 90+ polskich piłkarzy** z europejskich lig
+- **Caching**: Warstwy cache dla optymalizacji zapytań API
 
 ### 📊 Backend API (FastAPI)
 - **RESTful API** z automatyczną dokumentacją Swagger/ReDoc
-- **Endpointy**: gracze, porównania, statystyki, matchlogs
+- **Endpointy**: gracze, porównania, statystyki, matchlogs, leaderboard, live
 - **Baza danych**: PostgreSQL (Supabase - darmowe 500MB!)
 - **Scheduler**: automatyczna synchronizacja
-  - Statystyki: 2x w tygodniu (Poniedziałek/Czwartek 6:00)
-  - Matchlogs: 1x w tygodniu (Wtorek 7:00)
+  - Statystyki: Czwartek i Niedziela 23:00 (Top 8 lig: 2x/tydzień, inne: 1x/tydzień)
+  - Match logs: Czwartek i Niedziela 23:00 (Top 8 lig), Niedziela 23:00 (niższe ligi)
+  - Cache cleanup: Codziennie 03:00
+  - Quota monitoring: Codziennie 12:00
 - **Email notifications**: HTML raporty po każdej synchronizacji
-- **Rate limiting**: 12 sekund między requestami (bezpieczne dla FBref ToS)
+- **Rate limiting**: Zgodne z limitem RapidAPI (100 requestów/miesiąc)
+- **Caching**: Warstwy cache (lineups 24h, squads 6h, matches 1h)
 - **Cloud deployment**: gotowy do deployment na Render.com (darmowy hosting!)
 
 ### 🎨 Frontend Dashboard (Streamlit)
@@ -126,12 +131,12 @@ All player statistics in this application are sourced from **[FBref.com](https:/
 - **Caching**: optymalizacja zapytań do API
 
 ### 🔄 Synchronizacja danych
-- **CLI Scripts**: `sync_player_full.py`, `sync_match_logs.py`
+- **CLI Scripts**: `sync_rapidapi.py`, `sync_single_player.py`
 - **Automatyczny scheduler**: synchronizacja w tle (backend na Render)
-  - Statystyki graczy: poniedziałek i czwartek 6:00
-  - Szczegółowe matchlogi: wtorek 7:00
+  - Statystyki graczy: czwartek i niedziela 23:00
+  - Match logs: czwartek i niedziela 23:00 (Top 8 lig), niedziela 23:00 (niższe ligi)
   - Email powiadomienia po każdej synchronizacji
-- **Cron-job.org**: budzi backend przed synchronizacją (5:55, 6:55)
+- **Caching**: Warstwy cache (lineups 24h, squads 6h, matches 1h)
 - **Retry mechanism**: ponowne próby dla nieudanych synchronizacji
 
 ## ⚡ Quick Start - Najczęstsze komendy
@@ -142,20 +147,20 @@ All player statistics in this application are sourced from **[FBref.com](https:/
 .\start_frontend.ps1   # Dashboard (port 8501)
 ```
 
-### Zsynchronizuj pojedynczego gracza (wszystkie sezony)
+### Zsynchronizuj pojedynczego gracza
 ```powershell
-python sync_player_full.py "Robert Lewandowski" --all-seasons
+python sync_rapidapi.py "Robert Lewandowski"
 ```
 
-### Zsynchronizuj szczegóły meczów (matchlogs - obecny sezon)
+### Zsynchronizuj z ręcznymi danymi
 ```powershell
-python sync_match_logs.py "Robert Lewandowski"
+python sync_rapidapi.py "Ziolkowski" --games 15 --minutes 1350
 ```
 
 ### Automatyczna synchronizacja (najlepsze!)
 Backend na Render automatycznie synchronizuje wszystkich graczy:
-- **Poniedziałek i Czwartek o 6:00** - pełne statystyki
-- **Wtorek o 7:00** - match logs
+- **Czwartek i Niedziela o 23:00** - pełne statystyki
+- **Codziennie o 09:00** - match logs
 - **Email powiadomienia** po każdej synchronizacji
 
 **Nie musisz ręcznie synchronizować!** 🤖
@@ -167,7 +172,7 @@ Backend na Render automatycznie synchronizuje wszystkich graczy:
 
 ### Wymagania wstępne
 - Python 3.10+
-- Playwright (Chromium)
+- RapidAPI Account (darmowe dla projektów hobby)
 - PostgreSQL (Supabase - darmowe dla projektów hobby)
 
 ### 1. Instalacja zależności
@@ -178,9 +183,6 @@ Backend na Render automatycznie synchronizuje wszystkich graczy:
 
 # Zainstaluj pakiety
 pip install -r requirements.txt
-
-# Zainstaluj Playwright Chromium
-python -m playwright install chromium
 ```
 
 ### 2. Konfiguracja
@@ -191,9 +193,12 @@ Utwórz plik `.env` w głównym katalogu (lub skopiuj z `.env.example`):
 
 # Baza danych (Production - Supabase PostgreSQL - DARMOWE!)
 # DATABASE_URL=postgresql://postgres.xxxxx:[YOUR-PASSWORD]@aws-1-eu-west-1.pooler.supabase.com:6543/postgres
-# 📖 Pełna instrukcja: SUPABASE_MIGRATION_GUIDE.md
 
-# Scheduler (włącz dla automatycznej synchronizacji 2x w tygodniu)
+# RapidAPI Key (WYMAGANE!)
+RAPIDAPI_KEY=your_rapidapi_key_here
+# Get your key from: https://rapidapi.com/creativesdev/api/free-api-live-football-data
+
+# Scheduler (włącz dla automatycznej synchronizacji)
 ENABLE_SCHEDULER=false
 
 # Timezone dla schedulera (domyślnie Europe/Warsaw)
@@ -203,14 +208,13 @@ SCHEDULER_TIMEZONE=Europe/Warsaw
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password  # Użyj Gmail App Password!
+SMTP_PASSWORD=your-app-password
 EMAIL_FROM=your-email@gmail.com
 EMAIL_TO=recipient@example.com
 ```
 
 **📧 Email Setup:**
 - **Wymagane**: Gmail App Password (nie zwykłe hasło!)
-- **Instrukcje**: Zobacz [EMAIL_SETUP_GUIDE.md](EMAIL_SETUP_GUIDE.md)
 - **Opcjonalne**: Scheduler działa bez emaili (tylko logi w konsoli)
 
 ### 3. Uruchom aplikację
@@ -242,13 +246,16 @@ SCHEDULER_TIMEZONE=Europe/Warsaw
 ```
 
 **Harmonogram:**
-- 📅 **Poniedziałek 6:00** - po meczach weekendowych (liga)
-- 📅 **Czwartek 6:00** - po Lidze Mistrzów (środa)
+- 📅 **Czwartek 23:00** - statystyki zawodników (Top 8 lig)
+- 📅 **Niedziela 23:00** - statystyki zawodników (wszystkie ligi)
+- 📅 **Codziennie 09:00** - szczegóły meczów (match logs)
+- 📅 **Codziennie 03:00** - czyszczenie cache
+- 📅 **Codziennie 12:00** - monitoring quota API
 
 **Co synchronizuje:**
-- ✅ Competition stats i match logs sezonu 2025-2026 dla wszystkich graczy
-- ✅ Liga krajowa + Puchary Europejskie + Reprezentacja
-- ✅ Rate limiting: 12 sekund między każdym graczem
+- ✅ Competition stats sezonu 2025-2026 dla wszystkich graczy
+- ✅ Liga krajowa + Puchary Europejskie + Reprezentacja + Puchary krajowe
+- ✅ Rate limiting: zgodne z limitem RapidAPI (100 requestów/miesiąc)
 - ✅ Email z raportem po zakończeniu (opcjonalnie)
 
 **Wymagania:**
@@ -264,27 +271,25 @@ SCHEDULER_TIMEZONE=Europe/Warsaw
 #### Synchronizacja pojedynczego gracza
 
 ```powershell
-# Pełna synchronizacja - wszystkie sezony (competition stats + match logs)
-python sync_player_full.py "Robert Lewandowski" --all-seasons
+# Podstawowa synchronizacja (statystyki z zespołu)
+python sync_rapidapi.py "Robert Lewandowski"
 
-# Tylko match logs dla obecnego sezonu (2025-2026)
-python sync_match_logs.py "Robert Lewandowski"
+# Z ręcznymi danymi o meczach
+python sync_rapidapi.py "Ziolkowski" --games 15 --minutes 1350
 
-# Match logs dla konkretnego sezonu
-python sync_match_logs.py "Robert Lewandowski" --season 2024-2025
+# Wiele rozgrywek naraz
+python sync_rapidapi.py "Ziolkowski" --competitions "Serie A,Coppa Italia,Champions League" --games-list "15,2,5"
 ```
 
 **Co synchronizuje:**
-- **sync_player_full.py**: Competition stats + match logs ze wszystkich sezonów kariery
-- **sync_match_logs.py**: Tylko szczegółowe match logs (data, przeciwnik, wynik, gole, asysty, xG, xA, podania, etc.)
+- **sync_rapidapi.py**: Competition stats dla bieżącego sezonu
 
 #### Automatyczna synchronizacja wszystkich graczy (zalecane!)
 
 Backend na Render automatycznie synchronizuje wszystkich graczy:
-- **Poniedziałek i Czwartek o 6:00** - pełne statystyki (wszystkie sezony)
-- **Wtorek o 7:00** - match logs (obecny sezon)
+- **Czwartek i Niedziela o 23:00** - pełne statystyki
+- **Codziennie o 09:00** - match logs
 - **Email powiadomienia** z raportem po każdej synchronizacji
-- **Cron-job.org** budzi backend 5 minut przed synchronizacją
 
 **Nie musisz ręcznie synchronizować!** Scheduler robi to automatycznie. 🤖
 
@@ -468,13 +473,13 @@ db.close()
 
 **Następnie zsynchronizuj statystyki:**
 ```powershell
-python sync_player_full.py "Krzysztof Piątek" --all-seasons
+python sync_rapidapi.py "Krzysztof Piątek"
 ```
 
 **Ta komenda:**
-1. Wyszukuje gracza na FBref.com
-2. Synchronizuje statystyki sezonowe (wszystkie sezony)
-3. Synchronizuje matchlogs (obecny sezon 2025-2026)
+1. Wyszukuje gracza na RapidAPI
+2. Pobiera statystyki sezonowe z zespołu
+3. Aktualizuje bazę danych
 
 ### Zarządzanie bazą
 ```powershell
@@ -492,20 +497,18 @@ python tools/check_reqs.py
 
 | Co chcesz zrobić | Komenda |
 |------------------|---------|
-| 🔄 Zsynchronizuj gracza (wszystkie sezony) | `python sync_player_full.py "Lewandowski" --all-seasons` |
-| 🎯 Sync matchlogs (obecny sezon) | `python sync_match_logs.py "Lewandowski"` |
-| 📅 Sync graczy bez danych | `python sync_missing_players.py` |
-| 🤖 **Automatyczna sync (scheduler)** | **Backend na Render - automatycznie Pon/Czw/Wt** |
-| 🧪 Test emaila | `python -c "from app.backend.main import send_sync_notification_email; send_sync_notification_email(1, 0, 1, 0.5, [])"` |
+| 🔄 Zsynchronizuj gracza | `python sync_rapidapi.py "Lewandowski"` |
+| 🎯 Sync z danymi ręcznymi | `python sync_rapidapi.py "Ziolkowski" --games 15` |
+| 🏆 Sync wiele rozgrywek | `python sync_rapidapi.py "Ziolkowski" --competitions "Serie A,Coppa Italia" --games-list "15,2"` |
+| 🤖 **Automatyczna sync (scheduler)** | **Backend na Render - automatycznie Czw/Nd 23:00** |
 
 ### Synchronizacja (pełne przykłady)
 
 | Co chcesz zrobić | Komenda | Czas |
 |------------------|---------|------|
-| 📚 Pełna synchronizacja gracza (wszystkie sezony) | `python sync_player_full.py "Nazwisko" --all-seasons` | ~60s |
-| 🏆 Szczegóły meczów (obecny sezon) | `python sync_match_logs.py "Nazwisko"` | ~15s |
-| 🏆 Szczegóły meczów (konkretny sezon) | `python sync_match_logs.py "Nazwisko" --season 2024-2025` | ~15s |
-| 🤖 Wszyscy gracze (automatycznie) | **Scheduler na Render (Pon/Czw 6:00, Wt 7:00)** | ~20-30 min |
+| 📚 Podstawowa synchronizacja | `python sync_rapidapi.py "Nazwisko"` | ~10s |
+| 🎯 Sync z danymi ręcznymi | `python sync_rapidapi.py "Nazwisko" --games 15` | ~5s |
+| 🤖 Wszyscy gracze (automatycznie) | **Scheduler na Render (Czw/Nd 23:00)** | ~20-30 min |
 
 **💡 Zalecenie:** Używaj schedulera do regularnych aktualizacji. Ręcznie synchronizuj tylko nowych graczy lub gdy potrzebujesz natychmiastowej aktualizacji.
 
@@ -514,8 +517,8 @@ python tools/check_reqs.py
 Aby dodać nowego gracza, ręcznie dodaj go do bazy danych, a następnie zsynchronizuj:
 
 ```powershell
-# Synchronizuj nowego gracza (automatycznie znajdzie go na FBref)
-python sync_player_full.py "Nazwisko Gracza" --all-seasons
+# Synchronizuj nowego gracza (automatycznie znajdzie go na RapidAPI)
+python sync_rapidapi.py "Nazwisko Gracza"
 ```
 
 ### Uruchamianie
@@ -653,9 +656,8 @@ Email:    Gmail SMTP (opcjonalne)
 
 ### 📚 Dedykowane Przewodniki Troubleshooting
 
-- **[TROUBLESHOOTING_DATABASE.md](TROUBLESHOOTING_DATABASE.md)** - Problemy z połączeniem do bazy danych (Supabase, Render)
-- **[SCHEDULER_STATUS_GUIDE.md](SCHEDULER_STATUS_GUIDE.md)** - Monitoring i konfiguracja automatycznej synchronizacji
-- **[EMAIL_SETUP_GUIDE.md](EMAIL_SETUP_GUIDE.md)** - Konfiguracja powiadomień email dla schedulera
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Rozwiązywanie problemów
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Przewodnik deployment
 
 ### Backend nie startuje
 ```powershell
@@ -675,22 +677,13 @@ Invoke-RestMethod http://localhost:8000/health
 .\start_backend.ps1
 ```
 
-### Brak Playwright/Chromium
-```powershell
-python -m playwright install chromium
-python -m playwright install-deps chromium  # Linux: zainstaluj system dependencies
-```
-
 ### Błędy synchronizacji
 ```powershell
 # Sprawdź logi
 # Backend wyświetla szczegółowe logi w konsoli
 
 # Przetestuj pojedynczego gracza
-python sync_player_full.py "Robert Lewandowski" --all-seasons
-
-# Debug mode z widoczną przeglądarką
-python sync_player_full.py "Lewandowski" --all-seasons
+python sync_rapidapi.py "Robert Lewandowski"
 ```
 
 ### PostgreSQL: "duplicate key value violates unique constraint"
@@ -745,10 +738,11 @@ python -c "from app.backend.main import send_sync_notification_email; send_sync_
 - **20+** europejskich lig
 - **4 typy rozgrywek**: Liga, Puchary Europejskie, Reprezentacja, Puchary krajowe
 - **30+** statystyk per gracz (gracze) + **15+** statystyk (bramkarze)
-- **Rate limiting**: 12s między requestami (bezpieczne dla FBref ToS)
-- **Automatyczna synchronizacja**: 2x w tygodniu (Poniedziałek/Czwartek 6:00)
+- **Rate limiting**: Zgodne z limitem RapidAPI (100 requestów/miesiąc)
+- **Automatyczna synchronizacja**: Czwartek i Niedziela 23:00 (statystyki), Codziennie 09:00 (match logs)
 - **Cloud deployment ready**: Render.com, Railway, DigitalOcean, AWS
 - **Email notifications**: HTML raporty z wynikami synchronizacji
+- **Caching**: Warstwy cache dla optymalizacji zapytań API
 
 ## ⚠️ Known Limitations
 

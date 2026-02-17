@@ -4,7 +4,7 @@ from ..database import Base
 
 
 class PlayerSeasonStats(Base):
-    """Statystyki gracza dla konkretnego sezonu - rozszerzone o wszystkie dane FBref"""
+    """Statystyki gracza dla konkretnego sezonu - rozszerzone o wszystkie dane z RapidAPI"""
     __tablename__ = "player_season_stats"
     
     id = Column(Integer, primary_key=True, index=True)

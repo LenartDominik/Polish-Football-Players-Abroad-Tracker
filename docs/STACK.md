@@ -2,18 +2,18 @@
 
 ## 📋 Overview
 
-Full-stack web application demonstrating **web scraping automation** for tracking Polish footballers playing abroad with real-time statistics.
+Full-stack web application demonstrating **REST API integration** for tracking Polish footballers playing abroad with real-time statistics.
 
-**Project Concept:**  
-This platform showcases automated data pipeline: **web scraping** (Playwright) → **data processing** (pandas) → **database storage** (PostgreSQL) → **API serving** (FastAPI) → **visualization** (Streamlit). The system runs periodic synchronization, validates data, and provides interactive analytics.
+**Project Concept:**
+This platform showcases automated data pipeline: **API integration** (RapidAPI) → **data processing** (pandas) → **database storage** (PostgreSQL) → **API serving** (FastAPI) → **visualization** (Streamlit). The system runs periodic synchronization, validates data, and provides interactive analytics.
 
 **Architecture:** Modern Python-based web application
-- **Backend:** FastAPI REST API with automated scraping
+- **Backend:** FastAPI REST API with API client
 - **Frontend:** Streamlit multi-page dashboard
 - **Database:** PostgreSQL (Supabase) with SQLAlchemy ORM
 - **Automation:** APScheduler for periodic data sync
 - **Deployment:** Cloud-ready (Render.com + Streamlit Cloud)
-- **Data Source:** FBref.com (automated scraping with Playwright)
+- **Data Source:** RapidAPI Football API (free-api-live-football-data)
 
 ---
 
