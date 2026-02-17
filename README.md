@@ -21,7 +21,7 @@ This project demonstrates the use of **RapidAPI integration** to regularly fetch
 
 ## 🌐 Live Application
 
-**Try it now:** [https://polish-football-players-abroad-tracker.streamlit.app/](https://polish-football-players-abroad-tracker.streamlit.app/)
+**Try it now:** [https://polish-footballers-abroad-tracker.streamlit.app/](https://polish-footballers-abroad-tracker.streamlit.app/)
 
 ### 📱 How to Use:
 

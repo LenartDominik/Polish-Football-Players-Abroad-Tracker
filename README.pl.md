@@ -21,7 +21,7 @@ Projekt demonstruje wykorzystanie **REST API** do regularnego pobierania i przet
 
 ## 🌐 Aplikacja Live
 
-**Wypróbuj teraz:** [https://polish-football-players-abroad-tracker.streamlit.app/](https://polish-football-players-abroad-tracker.streamlit.app/)
+**Wypróbuj teraz:** [https://polish-footballers-abroad-tracker.streamlit.app/](https://polish-footballers-abroad-tracker.streamlit.app/)
 
 ### 📱 Jak korzystać:
 
