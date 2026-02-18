@@ -1,16 +1,10 @@
 ﻿from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
 import pandas as pd
 from typing import List, Optional
-from app.backend.config import settings
-
-DATABASE_URL = settings.database_url
+from app.backend.database import SessionLocal
 
 router = APIRouter(prefix="/comparison", tags=["comparison"])
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
 
 
 @router.get("/players/{player_id}/stats")
