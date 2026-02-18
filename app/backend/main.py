@@ -44,9 +44,6 @@ from .utils import get_competition_type, handle_api_error
 logger = logging.getLogger(__name__)
 
 
-# Tworzenie tabel w bazie na starcie
-Base.metadata.create_all(bind=engine)
-
 # Global scheduler instance
 scheduler = None
 
@@ -636,6 +633,14 @@ async def lifespan(app: FastAPI):
     global scheduler
 
     logger.info("🚀 Aplikacja startuje...")
+
+    # Create database tables (non-blocking)
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("✅ Database tables verified")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not verify database tables: {e}")
+        logger.warning("   Tables should already exist. Continuing startup...")
 
     if os.getenv("ENABLE_SCHEDULER", "false").lower() == "true":
         logger.info("📅 Initializing scheduler...")
