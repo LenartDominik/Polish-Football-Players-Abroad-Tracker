@@ -1458,7 +1458,18 @@ if not filtered_df.empty:
 
                     season_display = gk_display
                 else:
-                    season_display = comp_stats[['season', 'competition_type', 'competition_name', 'games', 'goals', 'assists', 'xg', 'xa', 'yellow_cards', 'red_cards', 'minutes']].copy()
+                    # Safe column selection - check if columns exist
+                    required_cols = ['season', 'competition_type', 'competition_name', 'games', 'goals', 'assists', 'xg', 'xa', 'yellow_cards', 'red_cards', 'minutes']
+                    available_cols = [col for col in required_cols if col in comp_stats.columns]
+                    if available_cols:
+                        season_display = comp_stats[available_cols].copy()
+                        # Add missing columns with default values
+                        for col in required_cols:
+                            if col not in season_display.columns:
+                                season_display[col] = 0
+                        season_display = season_display[required_cols]
+                    else:
+                        season_display = pd.DataFrame(columns=required_cols)
 
                 # --- FIX: DATA CLEANING FOR DATAFRAME ---
                 if not season_display.empty:
