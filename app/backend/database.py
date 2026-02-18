@@ -32,16 +32,18 @@ if is_sqlite:
 elif is_postgresql:
     # PostgreSQL-specific settings
     # Check if using Supabase Transaction Pooler (port 6543 - needs prepared statements disabled)
-    connect_args = {}
+    connect_args = {
+        "client_encoding": "utf8",  # Required for Supabase pooler
+    }
     if "6543" in database_url or ("supabase.com" in database_url and "pooler" in database_url):
         # Disable prepared statements for Supabase Transaction Pooling (psycopg2)
         # This is required because Transaction Pooler doesn't support PREPARE statements
-        connect_args = {
+        connect_args.update({
             "keepalives": 1,
             "keepalives_idle": 30,
             "keepalives_interval": 10,
             "keepalives_count": 5,
-        }
+        })
     
     engine = create_engine(
         database_url,
