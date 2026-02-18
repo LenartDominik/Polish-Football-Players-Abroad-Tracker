@@ -1271,27 +1271,25 @@ if not filtered_df.empty:
             if is_goalkeeper:
                 objs = [df for df in [gk_stats, nat_history] if not df.empty]
                 if objs:
-                    import pandas as _pd
                     # Safe Concat
                     all_cols = pd.Index([])
                     for o in objs: all_cols = all_cols.union(o.columns)
                     objs_reindexed = [o.reindex(columns=all_cols).astype(object) for o in objs]
-                    stats_to_display = _pd.concat(objs_reindexed, ignore_index=True)
+                    stats_to_display = pd.concat(objs_reindexed, ignore_index=True)
                     stats_to_display = stats_to_display.infer_objects()
                 else:
-                    stats_to_display = _pd.DataFrame()
+                    stats_to_display = pd.DataFrame()
             else:
                 objs = [df for df in [comp_stats, nat_history] if not df.empty]
                 if objs:
-                    import pandas as _pd
                     # Safe Concat
                     all_cols = pd.Index([])
                     for o in objs: all_cols = all_cols.union(o.columns)
                     objs_reindexed = [o.reindex(columns=all_cols).astype(object) for o in objs]
-                    stats_to_display = _pd.concat(objs_reindexed, ignore_index=True)
+                    stats_to_display = pd.concat(objs_reindexed, ignore_index=True)
                     stats_to_display = stats_to_display.infer_objects()
                 else:
-                    stats_to_display = _pd.DataFrame()
+                    stats_to_display = pd.DataFrame()
             
             if not stats_to_display.empty and len(stats_to_display) > 0:
                 st.write("---")
@@ -1302,14 +1300,13 @@ if not filtered_df.empty:
                 
                 # IMPORTANT: RECREATING THE DATAFRAME LOGIC TO ENSURE IT WORKS
                 if is_goalkeeper:
-                    import pandas as _pd
                     # Standardized columns for all goalkeepers (ordered exactly as requested)
                     gk_cols = ['season', 'competition_type', 'competition_name', 'games', 'games_starts', 'minutes', 'clean_sheets', 'goals_against', 'save_percentage']
                     
                     if not gk_stats.empty:
                         gk_display = gk_stats.reindex(columns=gk_cols).copy()
                     else:
-                        gk_display = _pd.DataFrame(columns=gk_cols)
+                        gk_display = pd.DataFrame(columns=gk_cols)
                         
                     # Add fallback rows from comp_stats
                     comp_needed = ['LEAGUE','EUROPEAN_CUP','DOMESTIC_CUP','NATIONAL_TEAM']
@@ -1361,7 +1358,7 @@ if not filtered_df.empty:
                                 'goals_against': 0,
                                 'save_percentage': None,
                             })
-                        comp_display_df = _pd.DataFrame(rows) if rows else _pd.DataFrame(columns=gk_cols)
+                        comp_display_df = pd.DataFrame(rows) if rows else pd.DataFrame(columns=gk_cols)
                         if not comp_display_df.empty:
                             if gk_display.empty:
                                 gk_display = comp_display_df
@@ -1373,7 +1370,7 @@ if not filtered_df.empty:
                                     for o in objs: 
                                         all_cols = all_cols.union(o.columns)
                                     objs_reindexed = [o.reindex(columns=all_cols).astype(object) for o in objs]
-                                    gk_display = _pd.concat(objs_reindexed, ignore_index=True)
+                                    gk_display = pd.concat(objs_reindexed, ignore_index=True)
                                     gk_display = gk_display.infer_objects()
                             
                         # --- AGGREGATION: GROUP NATIONAL TEAM STATS FOR GK ---
@@ -1443,7 +1440,7 @@ if not filtered_df.empty:
                                     for o in objs:
                                         all_cols = all_cols.union(o.columns)
                                     objs_reindexed = [o.reindex(columns=all_cols).astype(object) for o in objs]
-                                    gk_display = _pd.concat(objs_reindexed, ignore_index=True)
+                                    gk_display = pd.concat(objs_reindexed, ignore_index=True)
                                     gk_display = gk_display.infer_objects()
                                 elif not nt_grouped_clean.empty:
                                     gk_display = nt_grouped_clean
