@@ -262,7 +262,7 @@ SCHEDULER_TIMEZONE=Europe/Warsaw
 - ⚠️ Backend musi być uruchomiony 24/7
 - ⚠️ Komputer musi być włączony (lub użyj cloud deployment!)
 
-**Cloud deployment:** Zobacz [DEPLOYMENT.md](DEPLOYMENT.md) dla darmowego hostingu 24/7!
+**Cloud deployment:** Zobacz [DEPLOYMENT.md](docs/DEPLOYMENT.md) dla darmowego hostingu 24/7!
 
 ---
 
@@ -415,7 +415,7 @@ DATABASE_URL=postgresql://postgres.xxxxx:[YOUR-PASSWORD]@aws-0-eu-central-1.pool
 alembic upgrade head
 ```
 
-**📖 Szczegółowa instrukcja:** [SUPABASE_GUIDE.md](SUPABASE_GUIDE.md)
+**📖 Szczegółowa instrukcja:** [DATABASE.md](docs/DATABASE.md)
 
 ---
 
@@ -569,20 +569,20 @@ python sync_rapidapi.py "Nazwisko Gracza"
 ### 📖 Dokumentacja projektu
 - 📘 [Backend API - Dokumentacja](app/backend/README.md)
 - 📗 [Frontend - Dokumentacja](app/frontend/README.md)
-- 📄 [Stack technologiczny](STACK.md)
+- 📄 [Stack technologiczny](docs/STACK.md)
 - 📖 [README (English)](README.md) - English version
 - 📖 [README (Polish)](README.pl.md) - Polska wersja
-- 💻 [Technology Stack](STACK.md) - Użyte technologie i architektura
+- 💻 [Technology Stack](docs/STACK.md) - Użyte technologie i architektura
 - 💻 [Stack Technologiczny](STACK.pl.md) - Polska wersja stacku
-- 🚀 [Deployment Guide](DEPLOYMENT.md) - **Pełny przewodnik deployment (EN)**
-- ☁️ [Streamlit Cloud Deployment](STREAMLIT_CLOUD_DEPLOYMENT.pl.md) - **Szczegółowy tutorial (PL)**
-- 📖 [API Documentation](API_DOCUMENTATION.md) - Kompletna dokumentacja API (EN)
-- 📖 [Dokumentacja API](API_DOCUMENTATION.pl.md) - Dokumentacja API (PL)
-- 🔧 [Troubleshooting](TROUBLESHOOTING.md) - Rozwiązywanie problemów
-- ⚖️ [Legal Notice](LEGAL_NOTICE.md) - Informacje prawne (EN)
-- ⚖️ [Informacje Prawne](LEGAL_NOTICE.pl.md) - Informacje prawne (PL)
-- ⚖️ [Legal Notice](LEGAL_NOTICE.md) - **WAŻNE - Przeczytaj przed użyciem!**
-- 🎓 [Credits](CREDITS.md) - Podziękowania i atrybuty
+- 🚀 [Deployment Guide](docs/DEPLOYMENT.md) - **Pełny przewodnik deployment (EN)**
+- ☁️ [Streamlit Cloud Deployment](docs/STREAMLIT_CLOUD_DEPLOYMENT.pl.md) - **Szczegółowy tutorial (PL)**
+- 📖 [API Documentation](docs/API_DOCUMENTATION.md) - Kompletna dokumentacja API (EN)
+- 📖 [Dokumentacja API](docs/API_DOCUMENTATION.pl.md) - Dokumentacja API (PL)
+- 🔧 [Troubleshooting](docs/TROUBLESHOOTING.md) - Rozwiązywanie problemów
+- ⚖️ [Legal Notice](docs/LEGAL_NOTICE.md) - Informacje prawne (EN)
+- ⚖️ [Informacje Prawne](docs/LEGAL_NOTICE.pl.md) - Informacje prawne (PL)
+- ⚖️ [Legal Notice](docs/LEGAL_NOTICE.md) - **WAŻNE - Przeczytaj przed użyciem!**
+- 🎓 [Credits](docs/CREDITS.md) - Podziękowania i atrybuty
 
 ### 🌐 Linki zewnętrzne
 - 🌐 [FBref (źródło danych)](https://fbref.com/)
@@ -609,7 +609,7 @@ python sync_rapidapi.py "Nazwisko Gracza"
 5. Dodaj zmienne środowiskowe (email)
 6. Deploy!
 
-**Szczegółowa instrukcja:** [DEPLOYMENT.md](DEPLOYMENT.md)
+**Szczegółowa instrukcja:** [DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ---
 
@@ -633,7 +633,7 @@ Email:    Gmail SMTP (opcjonalne)
 
 **Koszty:** $0/miesiąc (wszystko na darmowych tierach!)
 
-**Szczegółowa instrukcja:** [STREAMLIT_CLOUD_DEPLOYMENT.pl.md](STREAMLIT_CLOUD_DEPLOYMENT.pl.md)
+**Szczegółowa instrukcja:** [STREAMLIT_CLOUD_DEPLOYMENT.pl.md](docs/STREAMLIT_CLOUD_DEPLOYMENT.pl.md)
 
 ---
 
@@ -648,7 +648,7 @@ Email:    Gmail SMTP (opcjonalne)
 - Zawsze włączony
 - ~200-300 zł jednorazowo
 
-**Instrukcje:** Zobacz [DEPLOYMENT_SUMMARY.md](DEPLOYMENT_SUMMARY.md)
+**Instrukcje:** Zobacz [DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ---
 
@@ -656,8 +656,8 @@ Email:    Gmail SMTP (opcjonalne)
 
 ### 📚 Dedykowane Przewodniki Troubleshooting
 
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Rozwiązywanie problemów
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Przewodnik deployment
+- **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Rozwiązywanie problemów
+- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Przewodnik deployment
 
 ### Backend nie startuje
 ```powershell
@@ -707,7 +707,7 @@ python fix_postgres_sequences.py
 2. Sprawdź format: `postgresql://postgres.PROJECT_REF:PASSWORD@...`
 3. Sprawdź hasło w Supabase Dashboard
 
-**Pełny przewodnik:** [TROUBLESHOOTING_DATABASE.md](TROUBLESHOOTING_DATABASE.md)
+**Pełny przewodnik:** [TROUBLESHOOTING_DATABASE.pl.md](docs/TROUBLESHOOTING_DATABASE.pl.md)
 
 ### Scheduler nie działa
 ```powershell

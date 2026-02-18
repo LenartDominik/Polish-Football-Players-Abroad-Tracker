@@ -161,10 +161,9 @@ EMAIL_TO=recipient@example.com
 
 ## 📚 Powiązane Dokumenty
 
-- **SUPABASE_GUIDE.md** - Konfiguracja Supabase
-- **RENDER_DEPLOYMENT.md** - Deployment na Render
-- **SCHEDULER_DOKUMENTACJA.md** - Scheduler setup
-- **.env.example** - Przykładowa konfiguracja środowiska
+- **DATABASE.md** - Struktura i konfiguracja bazy danych
+- **DEPLOYMENT.md** - Przewodnik deployment (backend + Supabase)
+- **TROUBLESHOOTING.md** - Rozwiązywanie problemów
 
 ---
 

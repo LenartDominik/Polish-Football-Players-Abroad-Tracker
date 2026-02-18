@@ -415,16 +415,16 @@ alembic upgrade head
 
 **Getting Started:**
 - 📖 **[README.md](README.md)** - You are here!
-- 🚀 **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deploy to production
-- 🔧 **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues
+- 🚀 **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Deploy to production
+- 🔧 **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues
 
 **Reference:**
-- 📚 **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** - Complete API reference
-- 🛠️ **[STACK.md](STACK.md)** - Technology stack
-- 🌐 **[RAPIDAPI_SETUP.md](RAPIDAPI_SETUP.md)** - RapidAPI configuration
+- 📚 **[API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)** - Complete API reference
+- 🛠️ **[STACK.md](docs/STACK.md)** - Technology stack
+- 🌐 **[RAPIDAPI_SETUP.md](docs/RAPIDAPI_SETUP.md)** - RapidAPI configuration
 
 **Legal:**
-- ⚖️ **[LEGAL_NOTICE.md](LEGAL_NOTICE.md)** - Data attribution
+- ⚖️ **[LEGAL_NOTICE.md](docs/LEGAL_NOTICE.md)** - Data attribution
 
 ## 🐛 Rozwiązywanie problemów
 

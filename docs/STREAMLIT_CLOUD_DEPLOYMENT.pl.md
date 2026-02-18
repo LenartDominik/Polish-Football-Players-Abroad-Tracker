@@ -236,8 +236,6 @@ git push origin main
 BACKEND_API_URL = "https://polish-players-backend.onrender.com"
 ```
 
-**📖 Szczegółowy przewodnik:** [STREAMLIT_SECRETS_SETUP.md](STREAMLIT_SECRETS_SETUP.md)
-
 **Zamień URL na swój Render backend URL:**
 - Znajdź go w Render Dashboard (górna część strony)
 - **NIE** dodawaj `/` na końcu URL
@@ -488,8 +486,8 @@ API_KEY = "your-secret-key"
 - Render: https://dashboard.render.com/
 
 ### Projekt:
-- `RENDER_DEPLOYMENT.md` - szczegóły backend
-- `COMMERCIAL_DEPLOYMENT.md` - opcje produkcyjne
+- `DEPLOYMENT.md` - szczegóły deployment (backend + frontend)
+- `STACK.md` - technologia i architektura
 
 ---
 
@@ -538,9 +536,9 @@ Twoja aplikacja jest teraz dostępna publicznie:
 ---
 
 **Masz pytania?** Zobacz:
-- `RENDER_DEPLOYMENT.md` - więcej o backend
-- `COMMERCIAL_DEPLOYMENT.md` - opcje płatne/produkcyjne
-- `FAQ_MATCHLOGS.md` - FAQ o danych
+- `DEPLOYMENT.md` - pełny przewodnik deployment
+- `TROUBLESHOOTING.md` - rozwiązywanie problemów
+- `API_DOCUMENTATION.md` - dokumentacja API
 
 **Data:** 25.11.2025  
 **Wersja:** v0.7.3  

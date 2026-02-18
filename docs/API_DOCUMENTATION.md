@@ -881,7 +881,7 @@ curl http://localhost:8000/api/live/player/1
 ## 📚 Additional Documentation
 
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Troubleshooting guide
-- **[README.md](README.md)** - Complete project documentation
+- **[README.md](../README.md)** - Complete project documentation
 - **[LEGAL_NOTICE.md](LEGAL_NOTICE.md)** - Legal terms and data attribution
 - **[RAPIDAPI_SETUP.md](RAPIDAPI_SETUP.md)** - RapidAPI configuration guide
 
@@ -991,4 +991,4 @@ All endpoints return standard HTTP status codes and JSON error messages:
 
 ---
 
-**Last Updated:** 2025-12-02
+
