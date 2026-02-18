@@ -540,11 +540,8 @@ def load_data():
 # Sidebar - Search
 st.sidebar.header("🔎 Player Search")
 
-search_name = st.sidebar.text_input("Enter player name", placeholder="e.g. Lewandowski, Zieliński...")
-
 # Optional filters
-st.sidebar.markdown("---")
-st.sidebar.subheader("🎛 Filters (Optional)")
+st.sidebar.subheader("🎛 Filters")
 
 # Load data
 df, stats_df, comp_stats_df, gk_stats_df, matches_df = load_data()
@@ -562,14 +559,10 @@ selected_team = st.sidebar.selectbox("Team", teams)
 # Players list (sorted names first, then prepended with 'All')
 raw_players = [f"{row['name']} ({get_full_position(row.get('position'))})" for _, row in df.dropna(subset=['name']).iterrows()]
 players_list = ['All'] + sorted(list(set(raw_players)))
-selected_player_str = st.sidebar.selectbox("Player (optional)", players_list)
+selected_player_str = st.sidebar.selectbox("🔍 Select Player", players_list, help="Start typing to search...")
 
 # Apply filters
 filtered_df = df.copy()
-
-# Filtruj po nazwisku
-if search_name:
-    filtered_df = filtered_df[filtered_df['name'].str.contains(search_name, case=False, na=False)]
 
 # Filtruj po drużynie
 if selected_team != 'All':
@@ -583,12 +576,12 @@ if selected_player_str != 'All':
         selected_player_name = selected_player_str.rsplit(" (", 1)[0]
     else:
         selected_player_name = selected_player_str
-        
+
     filtered_df = filtered_df[filtered_df['name'] == selected_player_name]
 
-# Jeśli nie ma wyszukiwania ANI filtru drużyny ANI gracza, nie pokazuj nic
-if not search_name and selected_team == 'All' and selected_player_str == 'All':
-    st.info("👆 Enter a player name, select a team, or choose a player to view statistics")
+# Jeśli nie ma filtru drużyny ANI gracza, nie pokazuj nic
+if selected_team == 'All' and selected_player_str == 'All':
+    st.info("👆 Select a team or choose a player to view statistics")
     
     # Footer - Data Source Attribution
     st.divider()
@@ -1642,9 +1635,9 @@ if not filtered_df.empty:
     )
 else:
     if selected_team != 'All':
-        st.warning(f"⚠️ No players found matching '{search_name}' in team '{selected_team}'")
+        st.warning(f"⚠️ No players found in team '{selected_team}'")
     else:
-        st.warning(f"⚠️ No players found matching '{search_name}'")
+        st.warning(f"⚠️ No players found matching your criteria")
 
 # Sidebar info
 st.sidebar.markdown("---")
